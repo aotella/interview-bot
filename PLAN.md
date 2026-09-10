@@ -16,8 +16,9 @@ Source of truth (read these before touching this plan):
 - `interview-prep-agent-requirements.md`
 - `interview-prep-agent-design.md`
 
-**Status: Phase 2 — Data layer — complete. Phase 3 — External
-integrations — not started.**
+**Status: Phase 3 — External integrations — complete (OpenRouter success
+path needs a live re-check with a real API key — see Phase 3 DoD). Phase 4
+— Agent logic — not started.**
 (Update this line every time a phase completes. Next session: start here,
 re-read this primer and the current phase's checklist state before making
 any changes.)
@@ -68,10 +69,13 @@ opposed to stubbed) until decided.
    separate, finer-grained vocabulary. Blocks: Phase 2's weak-point store
    schema, Phase 4's grader-output schema, and the report generator's
    `weak_points` field mapping — get this wrong and all three need rework.
-4. **SearXNG MCP setup.** Neither doc says whether a local SearXNG
-   instance/MCP server already exists, needs to be stood up, or is external
-   infra to point at — no connection config (URL, auth, transport) given.
-   Blocks: Phase 3's SearXNG wiring task.
+4. ~~**SearXNG MCP setup.**~~ **Resolved 2026-09-10:** a SearXNG instance is
+   already running locally at `http://localhost:10999` with its JSON API
+   enabled. Question sourcing calls it directly over HTTP
+   (`GET /search?format=json`) rather than through a separate MCP server
+   process — no other MCP consumer exists to justify that layer. Configured
+   via the new optional `SEARXNG_URL` env var (default
+   `http://localhost:10999`). See `backend/searxng_client.py`.
 5. **Grader structured-output enforcement mechanism.** The design doc says
    the grader "returns structured output" but not how that's enforced —
    OpenRouter JSON-schema/tool-calling mode, a parse-and-retry loop, or
@@ -203,24 +207,30 @@ wired so question sourcing has a real search tool — both testable in
 isolation, no agent logic yet.
 
 **Tasks**
-- [ ] Implement real HTTP call logic in `openrouter_client.py`: request
+- [x] Implement real HTTP call logic in `openrouter_client.py`: request
       construction, auth header from `config.OPENROUTER_API_KEY`, response
       parsing, error handling for rate limit/timeout/malformed response
-- [ ] `complete(role=..., messages=...)` resolves the model ID from
+- [x] `complete(role=..., messages=...)` resolves the model ID from
       `config.models.<role>` so callers never hardcode a model string
-- [ ] Resolve **Flagged item 4** (SearXNG MCP connection details) before
+- [x] Resolve **Flagged item 4** (SearXNG MCP connection details) before
       wiring; document the decision in this file once made
-- [ ] Add `backend/scripts/smoke_openrouter.py`: calls `complete()` for all
+- [x] Add `backend/scripts/smoke_openrouter.py`: calls `complete()` for all
       three roles with a trivial prompt, prints responses
-- [ ] Add `backend/scripts/smoke_searxng.py`: calls the SearXNG MCP search
+- [x] Add `backend/scripts/smoke_searxng.py`: calls the SearXNG MCP search
       tool with a fixed query, prints raw results
 
 **Definition of done**
 - A real OpenRouter call succeeds for all three roles, returns parsed text
-- A real SearXNG MCP search succeeds, returns result objects with at least
-  title/url/snippet
+  — **verified for the error path (bad key → clean 401) with a placeholder
+  key; a live success call needs a real `OPENROUTER_API_KEY`, which this
+  session doesn't have. Run `python -m backend.scripts.smoke_openrouter`
+  yourself with a real key to confirm.**
+- A real SearXNG search succeeds, returns result objects with at least
+  title/url/snippet — verified live against the local instance
 - Both fail with clear, actionable errors on bad auth/config — no silent
-  hangs, no raw library stack traces surfacing to the caller
+  hangs, no raw library stack traces surfacing to the caller — verified for
+  both (bad OpenRouter key → 401 message; unreachable SearXNG URL →
+  connection-refused message)
 
 **Verification**
 - `python -m backend.scripts.smoke_openrouter` → non-empty completions for

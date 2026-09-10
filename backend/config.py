@@ -35,6 +35,12 @@ OBSIDIAN_VAULT_PATH = _require_env("OBSIDIAN_VAULT_PATH")
 EXCALIDRAW_EXPORT_PATH = _require_env("EXCALIDRAW_EXPORT_PATH")
 OPENROUTER_API_KEY = _require_env("OPENROUTER_API_KEY")
 
+# Base URL of a locally-running SearXNG instance with its JSON API enabled
+# (Flagged item 4: resolved as "call SearXNG's own /search?format=json
+# directly over HTTP" rather than via a separate MCP server process).
+# Optional since it has a sane local default, unlike the three vars above.
+SEARXNG_URL = os.environ.get("SEARXNG_URL", "http://localhost:10999")
+
 
 @dataclass(frozen=True)
 class Models:
