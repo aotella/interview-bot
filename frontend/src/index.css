@@ -1,0 +1,193 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, sans-serif;
+  --bg: #1a1a1a;
+  --fg: #eaeaea;
+  --muted: #999;
+  --accent: #4a90d9;
+  --follow-up-bg: #3a2f00;
+  --follow-up-border: #d9a400;
+  --interject-bg: #3a0f0f;
+  --interject-border: #d94a4a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  position: relative;
+  min-height: 100vh;
+}
+
+button {
+  font-size: 1rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #262626;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button:not(:disabled):hover {
+  border-color: var(--accent);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.error {
+  color: #ff6b6b;
+}
+
+/* Round selector - no config screen, one click to the question */
+.round-selector {
+  text-align: center;
+  margin-top: 4rem;
+}
+
+.round-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.round-buttons button {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+}
+
+/* Live session - one thing on screen at a time, no sidebar */
+.session-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.elapsed-time {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.question-panel {
+  font-size: 1.15rem;
+  line-height: 1.5;
+  padding: 1rem;
+  background: #222;
+  border-radius: 8px;
+}
+
+.answer-input {
+  width: 100%;
+  min-height: 220px;
+  font-size: 1rem;
+  line-height: 1.5;
+  padding: 1rem;
+  background: #111;
+  color: var(--fg);
+  border: 1px solid #333;
+  border-radius: 8px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* Inline interjection/follow-up panel - never a modal */
+.inline-panel {
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid;
+  line-height: 1.5;
+}
+
+.inline-panel--follow_up {
+  background: var(--follow-up-bg);
+  border-color: var(--follow-up-border);
+}
+
+.inline-panel--interject {
+  background: var(--interject-bg);
+  border-color: var(--interject-border);
+}
+
+.session-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.end-button {
+  margin-left: auto;
+  border-color: #666;
+}
+
+/* History link, hidden during a live session */
+.history-link {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+
+.complete-screen {
+  text-align: center;
+  margin-top: 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* History view - plain list + a simple trend line, not a dashboard */
+.history-view {
+  padding-top: 3rem;
+}
+
+.score-trend {
+  color: var(--accent);
+  display: block;
+  margin: 1.5rem 0;
+}
+
+.session-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.session-list-item {
+  display: flex;
+  gap: 1rem;
+  padding: 0.6rem 0.8rem;
+  background: #222;
+  border-radius: 6px;
+}
+
+.session-round {
+  color: var(--muted);
+}
+
+.session-status {
+  margin-left: auto;
+  font-weight: 600;
+}

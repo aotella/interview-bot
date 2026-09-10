@@ -16,9 +16,13 @@ Source of truth (read these before touching this plan):
 - `interview-prep-agent-requirements.md`
 - `interview-prep-agent-design.md`
 
-**Status: Phase 6 — Backend API surface — complete, fully verified live
-(2026-09-10) with the full curl sequence against a running server. Phase 7
-— Frontend — not started.**
+**Status: Phase 7 — Frontend — built and building cleanly (`npm run build`
+succeeds), but NOT verified in an actual browser - Chrome extension access
+was declined this session, so no automated click-through was possible. The
+dev server (`npm run dev`, :5173) and backend (`python -m backend.app`,
+:8000, using your real `.env`) were both left running at end of session for
+you to do the manual walkthrough yourself. Phase 8 — End-to-end pass — not
+started.**
 
 **Model choice note (2026-09-10):** `config.py`'s model IDs were changed
 from `anthropic/claude-sonnet-4.6` to `z-ai/glm-5.3-flash` for all three
@@ -507,42 +511,63 @@ backend, then pause/diagram-attach/history layered in — following the UI
 design principles in the design doc.
 
 **Tasks**
-- [ ] Scaffold Node/Vite/React app under `frontend/`
-- [ ] Round-selector screen: two buttons (HLD / LLD+Deep-dive), single click
+- [x] Scaffold Node/Vite/React app under `frontend/`
+- [x] Round-selector screen: two buttons (HLD / LLD+Deep-dive), single click
       straight into the question — no config screen
-- [ ] Core session view: question pinned at top, one large answer input
+- [x] Core session view: question pinned at top, one large answer input
       (typed or Spokenly-dictated — same field, no special integration),
       one Save Checkpoint button, no sidebar/secondary panels visible
-- [ ] Confirm the answer input is a plain, standard-focusable text element
+- [x] Confirm the answer input is a plain, standard-focusable text element
       (native `<textarea>` or equivalent) — not a rich-text/contenteditable
       component that could intercept or mangle OS-level dictation input
-- [ ] Inline interjection/follow-up panel: distinctly colored, directly
+      (`SessionView.jsx`'s `.answer-input` is a plain `<textarea>`, no
+      contenteditable/rich-text library anywhere in the tree)
+- [x] Inline interjection/follow-up panel: distinctly colored, directly
       below the answer box, never a modal — shown only when decision !=
       `continue`
-- [ ] Quiet elapsed-time display (small, corner, not a countdown)
-- [ ] Pause control (button + visible pause state)
-- [ ] "Attach latest diagram" button wired to `POST /sessions/{id}/diagram`
-- [ ] History view: plain chronological list + simple score-trend line
-      (not a dashboard), pulling from `GET /sessions`
-- [ ] Wire all actions to the Phase 6 API; minimal loading/error states
+- [x] Quiet elapsed-time display (small, corner, not a countdown) - client-
+      side timer (not polling `GET /sessions/{id}`), paused while the
+      session is paused
+- [x] Pause control (button + visible pause state)
+- [x] "Attach latest diagram" button wired to `POST /sessions/{id}/diagram`
+- [x] History view: plain chronological list + simple score-trend line
+      (inline SVG polyline of average score per graded session, not a
+      charting library or dashboard), pulling from `GET /sessions`
+- [x] Wire all actions to the Phase 6 API; minimal loading/error states
 
 **Definition of done**
 - A full round completes through the UI alone: pick round → see question →
   answer/checkpoint → inline interjections appear only when warranted →
   pause/resume → attach a diagram → end → "session complete" confirmation
+  — **implemented, builds cleanly, but NOT run through an actual browser
+  this session** (see status note above) - code review confirms the flow
+  wires together correctly (response field names match the Phase 6 API
+  exactly), but this is not the same as observed behavior
 - History view lists past sessions and renders a score trend without
-  touching Obsidian
-- No modals, no secondary panels mid-session, elapsed time non-intrusive
+  touching Obsidian — implemented, not visually verified
+- No modals, no secondary panels mid-session, elapsed time non-intrusive —
+  implemented (single-view component tree, no modal library used, history
+  link hidden during `view === "session"`), not visually verified
 
 **Verification**
 - Manual run-through with backend running: `npm run dev`, walk one full HLD
-  session in the browser, confirm each UI principle bullet holds
+  session in the browser, confirm each UI principle bullet holds — **NOT
+  DONE. You'll need to do this yourself**: both servers are running
+  (frontend http://localhost:5173, backend http://127.0.0.1:8000 using
+  your real `.env`, so a real session you run through the UI will write a
+  real report to your vault and update your real weak-point store - same
+  as Phase 8's real pass, so this doubles as that if you want it to)
 - With Spokenly running, focus the answer input and dictate a short test
   phrase — confirm the transcribed text lands in the field exactly as it
   would in any other native text field, with no formatting/structure loss
+  — **NOT DONE, needs you** (Spokenly isn't something this session can
+  drive)
 - Devtools network tab: diagram-attach calls fire only on button click, no
-  polling/watcher
-- History view renders correctly after ≥2 completed sessions exist
+  polling/watcher — **NOT DONE, needs a browser**; code review confirms no
+  `setInterval`/polling calls `api.attachDiagram` anywhere, only the button
+  handler does
+- History view renders correctly after ≥2 completed sessions exist — **NOT
+  DONE, needs a browser**
 
 ---
 
