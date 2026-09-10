@@ -59,9 +59,9 @@ class RubricVersions:
 
 
 models = Models(
-    interviewer="anthropic/claude-sonnet-4.6",
-    grader="anthropic/claude-sonnet-4.6",
-    question_sourcing="anthropic/claude-sonnet-4.6",
+    interviewer="z-ai/glm-5.3-flash",
+    grader="z-ai/glm-5.3-flash",
+    question_sourcing="z-ai/glm-5.3-flash",
 )
 
 # Reproducibility tuple: bumped by hand when the corresponding

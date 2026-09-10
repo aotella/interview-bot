@@ -16,10 +16,20 @@ Source of truth (read these before touching this plan):
 - `interview-prep-agent-requirements.md`
 - `interview-prep-agent-design.md`
 
-**Status: Phase 4 — Agent logic — complete (all code paths implemented and
-unit-tested with mocked model calls; the live-model halves of
-question_sourcing/interviewer/grader still need a real `OPENROUTER_API_KEY`
-run — see Phase 3 & 4 DoD notes). Phase 5 — Session engine — not started.**
+**Status: Phase 4 — Agent logic — complete, fully verified live (2026-09-10)
+against a real OpenRouter key using `z-ai/glm-5.3-flash` for all three
+roles — see the model-choice note below. Phase 5 — Session engine — not
+started.**
+
+**Model choice note (2026-09-10):** `config.py`'s model IDs were changed
+from `anthropic/claude-sonnet-4.6` to `z-ai/glm-5.3-flash` for all three
+roles. Reason: the user's OpenRouter key is scoped to an org workspace
+(`bbps`) whose guardrail blocks Anthropic models; `z-ai/glm-5.3-flash` is
+allowed and was confirmed working live for interviewer, grader, and
+question_sourcing. Requirements.md's "grading model should be pinned
+deliberately" note still applies going forward — don't swap this again
+without updating `grader_prompt_version`/`rubric_version` expectations if
+grading behavior visibly shifts.
 (Update this line every time a phase completes. Next session: start here,
 re-read this primer and the current phase's checklist state before making
 any changes.)
@@ -246,10 +256,9 @@ isolation, no agent logic yet.
 
 **Definition of done**
 - A real OpenRouter call succeeds for all three roles, returns parsed text
-  — **verified for the error path (bad key → clean 401) with a placeholder
-  key; a live success call needs a real `OPENROUTER_API_KEY`, which this
-  session doesn't have. Run `python -m backend.scripts.smoke_openrouter`
-  yourself with a real key to confirm.**
+  — **verified 2026-09-10** with a real key and `z-ai/glm-5.3-flash`
+  (`python -m backend.scripts.smoke_openrouter` → "pong" for all three
+  roles); also verified the error path earlier (bad key → clean 401)
 - A real SearXNG search succeeds, returns result objects with at least
   title/url/snippet — verified live against the local instance
 - Both fail with clear, actionable errors on bad auth/config — no silent
@@ -320,23 +329,27 @@ independently testable without the session engine or UI.
 
 **Definition of done**
 - Question sourcing CLI produces a real accepted question with a fully
-  populated provenance record from a live search — **not verified live:
-  this session has no real `OPENROUTER_API_KEY`. `select_target_tag`/
-  `compute_tag_weights` (the deterministic half) are verified by test;
-  run `python -m backend.scripts.dev_question_sourcing --round hld`
-  yourself with a real key to confirm the live path end-to-end.**
+  populated provenance record from a live search — **verified live
+  2026-09-10**: `dev_question_sourcing --round hld` returned a genuinely
+  ambiguous, scale/trade-off-driven rate-limiter question with populated
+  `source_urls`, `discovered_at`, `target_level`, and a well-reasoned
+  `seniority_eval` explaining why it clears the bar
 - Given a weak-point store where tag X has recent failures and a reset
   streak, and tag Y has a long success_streak, running question sourcing
   repeatedly favors tag X over tag Y at a rate clearly above chance —
   proven by test (`test_question_sourcing.py`, three tests, all passing)
 - Interviewer CLI, given a hand-crafted running-state + turn, returns a
-  valid decision — **code path verified (message assembly, fixture
-  loading); the live model-call half needs your real API key, same
-  caveat as above.**
+  valid decision — **verified live 2026-09-10**: `fixtures/turn_ok.json`
+  (solid requirements + estimation) → `follow_up`; `fixtures/turn_bad.json`
+  (no clarification, no estimation, dismissed caching) → `interject`,
+  correctly differentiating the two
 - Grader CLI, given a fixture transcript, returns a verdict where every
   evidence `event_id` exactly matches an event_id value present in the
   fixture transcript (not merely a plausible-looking string) — verified by
-  test with a mocked model response (real network call needs your key)
+  test with a mocked model response, AND live 2026-09-10 against a
+  hand-built 5-event transcript: correct verdict (REJECT), all 6 HLD
+  dimensions scored, every evidence event_id real, weak_point_outcomes
+  tags exactly matched rubric dimension names
 - Grepping the assembled interviewer prompt/messages for rubric dimension
   names returns zero matches — verified by test and by manual grep of both
   prompt files against all 6 HLD dimension names
