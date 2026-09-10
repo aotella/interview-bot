@@ -16,9 +16,9 @@ Source of truth (read these before touching this plan):
 - `interview-prep-agent-requirements.md`
 - `interview-prep-agent-design.md`
 
-**Status: Phase 5 — Session engine — complete, fully verified live
-(2026-09-10) with a full fake session run end-to-end. Phase 6 — Backend
-API surface — not started.**
+**Status: Phase 6 — Backend API surface — complete, fully verified live
+(2026-09-10) with the full curl sequence against a running server. Phase 7
+— Frontend — not started.**
 
 **Model choice note (2026-09-10):** `config.py`'s model IDs were changed
 from `anthropic/claude-sonnet-4.6` to `z-ai/glm-5.3-flash` for all three
@@ -449,39 +449,54 @@ and `data/weakpoints/{round_type}.json` unless you clean up after.
 **Goal:** Session engine is exposed over local-only HTTP via FastAPI.
 
 **Tasks**
-- [ ] Implement `backend/app.py`, bound to `127.0.0.1` only:
+- [x] Implement `backend/app.py`, bound to `127.0.0.1` only:
       `POST /sessions` (start), `POST /sessions/{id}/checkpoints` (save
       checkpoint), `POST /sessions/{id}/diagram` (attach latest),
       `POST /sessions/{id}/pause`, `POST /sessions/{id}/resume`,
       `POST /sessions/{id}/end`, `GET /sessions` (history list),
       `GET /sessions/{id}` (session summary — verdict/score summary, not
-      the full report, since the UI doesn't duplicate Obsidian)
-- [ ] Response shapes carry only what the UI needs: elapsed time, latest
+      the full report, since the UI doesn't duplicate Obsidian). Added
+      `session_engine.get_session_summary`/`list_sessions` (read-side
+      query functions the routes call into) and
+      `report_generator.read_report_frontmatter` (reads verdict/scores back
+      from the already-written report instead of duplicating grader-output
+      storage).
+- [x] Response shapes carry only what the UI needs: elapsed time, latest
       interviewer decision/text (only when not `continue`), pause state,
       checkpoint count
-- [ ] Add pydantic request validation and clear 4xx/5xx error responses
-- [ ] Add a dev run script/command (`uvicorn backend.app:app --reload`)
+- [x] Add pydantic request validation and clear 4xx/5xx error responses
+      (422 on bad request body via FastAPI/pydantic; `SessionEngineError`
+      → 400 globally, 404 specifically for "no such session" on
+      `GET /sessions/{id}`; `QuestionSourcingError` → 502)
+- [x] Add a dev run script/command (`uvicorn backend.app:app --reload`,
+      or `python -m backend.app` which calls `uvicorn.run(..., host="127.0.0.1")`)
 
 **Definition of done**
 - All routes map 1:1 to `session_engine` functions — no duplicated business
   logic in `app.py`
 - Server binds only to localhost; CORS scoped to the frontend dev origin,
-  not wildcard
+  not wildcard — **verified live**: `lsof` showed `TCP localhost:8000
+  (LISTEN)`, not `0.0.0.0`
 - `GET /sessions/{id}` after completion shows verdict/score summary without
-  dumping the full transcript/report
+  dumping the full transcript/report — verified live
 
 **Verification**
-- `uvicorn backend.app:app --port 8000`, then:
-  `curl -X POST localhost:8000/sessions -d '{"round_type":"hld"}' -H 'content-type: application/json'`
-  → returns session_id + question
-  `curl -X POST localhost:8000/sessions/{id}/checkpoints -d '{...}'` →
-  returns interviewer decision
-  `curl -X POST localhost:8000/sessions/{id}/pause` → confirms pause state;
-  `curl -X POST localhost:8000/sessions/{id}/resume` → confirms resume and
-  that paused duration was recorded
-  `curl -X POST localhost:8000/sessions/{id}/end` → confirmation; then
-  `curl localhost:8000/sessions/{id}` shows verdict
-- Confirm server bind address is `127.0.0.1`, not `0.0.0.0`
+- `uvicorn backend.app:app --port 8000`, then the full curl sequence —
+  **run live 2026-09-10** against throwaway vault/excalidraw paths (same
+  real-data-pollution caveat as Phase 5's dry run; cleaned up afterward):
+  start → real question with full provenance; checkpoint → real
+  `follow_up` decision; pause → `{"paused": true}`; resume →
+  `{"paused": false, "duration_seconds": ...}`; diagram attach → path
+  returned; `GET /sessions/{id}` mid-session → correct in-progress summary
+  with `latest_interviewer_text` populated; end → `{"graded": true,
+  "verdict": "REJECT", "report_path": ...}`; `GET /sessions/{id}`
+  post-end → verdict + scores, no transcript/report body; `GET /sessions`
+  → chronological history with both sessions
+- Confirmed server bind address is `127.0.0.1`, not `0.0.0.0`
+- 4 new `TestClient`-based unit tests (`test_app.py`, mocked
+  `session_engine`) cover request validation (422) and error-code mapping
+  (404 unknown session, 400 on `SessionEngineError`) without needing a live
+  model call — 21 tests passing overall
 
 ---
 

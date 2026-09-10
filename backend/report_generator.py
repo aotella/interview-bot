@@ -89,3 +89,17 @@ def generate_report(session_id: str, grader_output: GraderOutput) -> Path:
     report_path = vault_path / f"{session_id}.md"
     report_path.write_text(content)
     return report_path
+
+
+def read_report_frontmatter(session_id: str) -> dict | None:
+    """Read back a previously-written report's YAML frontmatter (verdict,
+    scores, etc.) - the API layer uses this rather than duplicating
+    grader-output storage, since the report is already the persisted
+    structured record of a completed grading."""
+    report_path = Path(config.OBSIDIAN_VAULT_PATH) / f"{session_id}.md"
+    if not report_path.exists():
+        return None
+    parts = report_path.read_text().split("---", 2)
+    if len(parts) < 3:
+        return None
+    return yaml.safe_load(parts[1])

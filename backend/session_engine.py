@@ -281,3 +281,65 @@ def end_session(session_id: str) -> dict:
         "verdict": grader_output.verdict,
         "report_path": str(report_path),
     }
+
+
+def get_session_summary(session_id: str) -> dict:
+    """Session summary for the UI: elapsed time, latest interviewer
+    decision/text (only when not `continue`), pause state, checkpoint
+    count while in progress; verdict/scores once ended and graded. Never
+    the full transcript or report - the UI doesn't duplicate Obsidian."""
+    events = transcript_store.read_transcript(session_id)
+    if not events:
+        raise SessionEngineError(f"No session found with id {session_id!r}")
+
+    session_start = next(e for e in events if e.event == "session_start")
+    ended = events[-1].event == "session_end"
+    checkpoint_count = sum(1 for e in events if e.event == "candidate_turn")
+
+    last_interviewer_turn = next(
+        (e for e in reversed(events) if e.event == "interviewer_turn"), None
+    )
+    latest_action = last_interviewer_turn.action if last_interviewer_turn else None
+    latest_text = (
+        last_interviewer_turn.text
+        if last_interviewer_turn and last_interviewer_turn.action != "continue"
+        else None
+    )
+
+    summary = {
+        "session_id": session_id,
+        "round_type": session_start.round_type,
+        "question": session_start.question,
+        "status": "ended" if ended else "in_progress",
+        "checkpoint_count": checkpoint_count,
+        "paused": _is_currently_paused(events),
+        "latest_interviewer_action": latest_action,
+        "latest_interviewer_text": latest_text,
+    }
+
+    if ended:
+        summary["elapsed_seconds"] = events[-1].active_seconds
+        frontmatter = report_generator.read_report_frontmatter(session_id)
+        if frontmatter is not None:
+            summary["verdict"] = frontmatter.get("verdict")
+            summary["scores"] = frontmatter.get("scores")
+    else:
+        summary["elapsed_seconds"] = _elapsed_seconds(events, _now())
+
+    return summary
+
+
+def list_sessions() -> list[dict]:
+    """Plain chronological session history for the UI's history view -
+    session_id, round_type, question, date, status, and verdict (if
+    graded). Newest first."""
+    summaries = []
+    for path in sorted(transcript_store.TRANSCRIPTS_DIR.glob("*.jsonl")):
+        session_id = path.stem
+        try:
+            summary = get_session_summary(session_id)
+        except (SessionEngineError, StopIteration):
+            continue
+        summaries.append(summary)
+    summaries.sort(key=lambda s: s["session_id"], reverse=True)
+    return summaries
