@@ -1,0 +1,12 @@
+{
+  "running_state": {
+    "round_type": "hld",
+    "question": "Design a URL shortener that must survive a 10x traffic spike during flash sales.",
+    "elapsed_seconds": 60,
+    "checkpoints": [],
+    "pause_history": [],
+    "diagrams_attached": []
+  },
+  "checkpoint_id": "cp_1",
+  "candidate_text": "Easy, I'll just use a single Postgres instance with an auto-increment ID for the short code and no caching layer at all - that'll handle any traffic fine, no need to estimate load or discuss scaling."
+  }

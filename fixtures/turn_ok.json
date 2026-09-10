@@ -1,0 +1,12 @@
+{
+  "running_state": {
+    "round_type": "hld",
+    "question": "Design a URL shortener that must survive a 10x traffic spike during flash sales.",
+    "elapsed_seconds": 300,
+    "checkpoints": [],
+    "pause_history": [],
+    "diagrams_attached": []
+  },
+  "checkpoint_id": "cp_1",
+  "candidate_text": "Before designing anything, let me clarify requirements: expected read/write QPS, whether custom aliases are needed, and redirect latency targets. Assuming 100:1 read/write ratio and ~50M new URLs/day, I'd estimate write QPS around 600 and read QPS around 60k at peak, which shapes the storage and caching choices."
+  }

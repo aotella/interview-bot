@@ -16,9 +16,10 @@ Source of truth (read these before touching this plan):
 - `interview-prep-agent-requirements.md`
 - `interview-prep-agent-design.md`
 
-**Status: Phase 3 — External integrations — complete (OpenRouter success
-path needs a live re-check with a real API key — see Phase 3 DoD). Phase 4
-— Agent logic — not started.**
+**Status: Phase 4 — Agent logic — complete (all code paths implemented and
+unit-tested with mocked model calls; the live-model halves of
+question_sourcing/interviewer/grader still need a real `OPENROUTER_API_KEY`
+run — see Phase 3 & 4 DoD notes). Phase 5 — Session engine — not started.**
 (Update this line every time a phase completes. Next session: start here,
 re-read this primer and the current phase's checklist state before making
 any changes.)
@@ -53,22 +54,33 @@ opposed to stubbed) until decided.
    vs. a 4 on any dimension. This is evaluative content, not architecture —
    needs a dedicated authoring pass, not an invented placeholder. Blocks:
    Phase 2's rubric YAML files (stub with TODO anchors), and blocks the
-   grader from being meaningfully calibrated in Phase 4.
+   grader from being meaningfully calibrated in Phase 4. **Decision
+   2026-09-10: user will author this in a follow-up session.** Phase 4's
+   grader code/prompts/schema are built and wired against the stubbed
+   `hld_v1.yaml` as-is (TODO anchor text passes through verbatim) — they
+   are structurally complete but not meaningfully calibrated until this
+   authoring pass happens. Do not treat a grader run against TODO anchors
+   as a real evaluation.
 2. **LLD/Deep-dive rubric dimension list.** HLD has an implied 6-dimension
    list (via the report frontmatter example in the design doc); LLD/Deep-dive
    has zero worked example anywhere, despite being a combined round type
    (low-level/OO design + resume-driven project deep-dive). Do not invent
    this by analogy to HLD. Blocks: Phase 2's `lld_deepdive_v1.yaml`.
-3. **Weak-point tag taxonomy vs. rubric dimensions.** The design doc's two
-   worked examples are inconsistent: report frontmatter's `weak_points` uses
-   kebab-case narrative phrases (`skipped-capacity-estimation`), while
-   grader-output/weak-point-store examples use snake_case dimension-like
-   keys (`capacity_estimation`, `tradeoff_articulation`,
-   `concurrency_deep_dive` — the last isn't even in HLD's implied dimension
-   list). Unclear whether weak-point tags ARE the rubric dimension set or a
-   separate, finer-grained vocabulary. Blocks: Phase 2's weak-point store
-   schema, Phase 4's grader-output schema, and the report generator's
-   `weak_points` field mapping — get this wrong and all three need rework.
+   **Decision 2026-09-10: user will author this in a follow-up session.**
+   Until then, `lld_deepdive_v1.yaml` stays empty and grader/report code
+   paths for `round_type=lld_deepdive` are exercised by tests using a
+   synthetic fixture rubric, not the real (still-empty) one — LLD/Deep-dive
+   grading is not usable end-to-end yet.
+3. ~~**Weak-point tag taxonomy vs. rubric dimensions.**~~ **Resolved
+   2026-09-10:** weak-point tags ARE the rubric dimension names, exactly —
+   no separate finer-grained vocabulary. `concurrency_deep_dive` in the
+   design doc's grader-output example was not an intentional third
+   vocabulary; treat it as illustrative, not literal. Grader-output
+   `weak_point_outcomes[].tag` and the weak-point store's keys must equal
+   `rubric_loader.load_rubric(round_type).dimension_names()` for that round.
+   The report frontmatter's kebab-case `weak_points` example
+   (`skipped-capacity-estimation`) is a human-readable rendering the report
+   generator derives from the tag + outcome, not a separate stored value.
 4. ~~**SearXNG MCP setup.**~~ **Resolved 2026-09-10:** a SearXNG instance is
    already running locally at `http://localhost:10999` with its JSON API
    enabled. Question sourcing calls it directly over HTTP
@@ -76,16 +88,29 @@ opposed to stubbed) until decided.
    process — no other MCP consumer exists to justify that layer. Configured
    via the new optional `SEARXNG_URL` env var (default
    `http://localhost:10999`). See `backend/searxng_client.py`.
-5. **Grader structured-output enforcement mechanism.** The design doc says
-   the grader "returns structured output" but not how that's enforced —
-   OpenRouter JSON-schema/tool-calling mode, a parse-and-retry loop, or
-   something else. Affects reliability/error-handling design. Blocks: Phase
-   4's grader agent implementation detail (not the schema itself).
-6. **Diagram image handling for the grader.** The grader must see actual
-   image bytes ("what's drawn," not just paths), but size limits, how
-   multiple diagrams per session get batched into one grading call, and
-   fallback behavior on a failed image load aren't specified. Blocks: Phase
-   4/5's grader-agent diagram handling.
+5. ~~**Grader structured-output enforcement mechanism.**~~ **Resolved
+   2026-09-10 (architectural call, not evaluative content — mine to make):**
+   parse-and-retry, not provider-specific JSON-schema/tool-calling mode —
+   keeps the grader provider-agnostic since `config.models.grader` could
+   point at any OpenRouter model. The prompt instructs the model to return
+   one JSON object matching the grader-output schema; the response is
+   parsed and validated against a pydantic model, with up to 3 attempts
+   (each retry re-sends the original request plus the previous invalid
+   output and the validation error) before raising a clear
+   `GraderOutputError` — never a silent fallback to unstructured text.
+6. **Diagram image handling for the grader.** **Resolved 2026-09-10
+   (architectural call): grader_agent.py takes pre-loaded image bytes as
+   input (list of `{checkpoint_id, path, media_type, data}`) — it does not
+   itself touch the filesystem, keeping Phase 4 testable without Phase 5's
+   session engine. All diagrams referenced by a session's
+   `diagram_attached` events are batched into the single grading call as
+   separate image content blocks, capped at 5 diagrams and 5MB each (a
+   session realistically has at most a handful). A diagram that fails to
+   load (missing file, over the cap) is dropped from the image blocks and
+   replaced with a text note in the prompt ("diagram at {path} for
+   checkpoint {checkpoint_id} could not be loaded") rather than aborting
+   the whole grading call — one bad image shouldn't block grading the rest
+   of the session.**
 
 ---
 
@@ -248,21 +273,21 @@ isolation, no agent logic yet.
 independently testable without the session engine or UI.
 
 **Tasks**
-- [ ] Author `backend/prompts/interviewer_hld_v1.md` and
+- [x] Author `backend/prompts/interviewer_hld_v1.md` and
       `interviewer_lld_deepdive_v1.md`: encode the
       `continue | follow_up | interject` contract, "interject only once the
       current thought completes," and confirm the rubric is never included
       in this prompt's context (hidden-rubric requirement)
-- [ ] Author `backend/prompts/grader_hld_v1.md` and
+- [x] Author `backend/prompts/grader_hld_v1.md` and
       `grader_lld_deepdive_v1.md`: instruct structured output matching the
       grader-output shape (per-dimension scores + evidence event IDs +
       verdict + weak_point_outcomes) — enforcement mechanism per
       **Flagged item 5**
-- [ ] Author `backend/prompts/question_sourcing_v1.md`: encode the
+- [x] Author `backend/prompts/question_sourcing_v1.md`: encode the
       seniority bar (ambiguity, scale/trade-off reasoning, no single correct
       answer) as an explicit accept/reject check; require a provenance
       record (source URLs, discovered_at, target_level, seniority_eval)
-- [ ] Implement `backend/question_sourcing.py`: calls SearXNG MCP, runs the
+- [x] Implement `backend/question_sourcing.py`: calls SearXNG (direct HTTP,
       seniority filter, loops re-search on reject, capped at 5 attempts; on
       exhausting the cap, fails session start with a clear, specific error
       (not a silent hang or an unbounded loop) — document this cap choice in
@@ -275,38 +300,46 @@ independently testable without the session engine or UI.
       search/selection targets for this session — this must measurably
       change question selection, not just read the store for logging.
       Returns question + provenance record matching `session_start`'s shape
-- [ ] Implement `backend/interviewer_agent.py`: takes the lightweight
+- [x] Implement `backend/interviewer_agent.py`: takes the lightweight
       running state (round type, question, elapsed time, checkpoints so
       far, pause history, diagrams attached) + new candidate turn; returns
       `continue|follow_up|interject` + text matching `interviewer_turn`
-- [ ] Implement `backend/grader_agent.py`: takes the full transcript (read
+- [x] Implement `backend/grader_agent.py`: takes the full transcript (read
       fresh from file) + referenced diagram image bytes per **Flagged item
       6**; applies the rubric loaded from `rubrics/{round_type}_{version}.yaml`;
       returns structured output matching the grader-output shape, with each
       evidence entry's `event_id` set to a real `event_id` value from the
       transcript being graded, never invented
-- [ ] Add dev CLIs: `backend/scripts/dev_question_sourcing.py`,
+- [x] Add dev CLIs: `backend/scripts/dev_question_sourcing.py`,
       `dev_interviewer_turn.py`, `dev_grade_transcript.py` for direct
       invocation with hand-crafted inputs
-- [ ] Write pytest tests feeding a hand-authored fixture transcript into the
+- [x] Write pytest tests feeding a hand-authored fixture transcript into the
       grader, asserting output validates against the schema AND that every
       evidence `event_id` exactly matches an `event_id` present in the
       fixture transcript
 
 **Definition of done**
 - Question sourcing CLI produces a real accepted question with a fully
-  populated provenance record from a live search
+  populated provenance record from a live search — **not verified live:
+  this session has no real `OPENROUTER_API_KEY`. `select_target_tag`/
+  `compute_tag_weights` (the deterministic half) are verified by test;
+  run `python -m backend.scripts.dev_question_sourcing --round hld`
+  yourself with a real key to confirm the live path end-to-end.**
 - Given a weak-point store where tag X has recent failures and a reset
   streak, and tag Y has a long success_streak, running question sourcing
   repeatedly favors tag X over tag Y at a rate clearly above chance —
-  proven by a test, not eyeballed
+  proven by test (`test_question_sourcing.py`, three tests, all passing)
 - Interviewer CLI, given a hand-crafted running-state + turn, returns a
-  valid decision
+  valid decision — **code path verified (message assembly, fixture
+  loading); the live model-call half needs your real API key, same
+  caveat as above.**
 - Grader CLI, given a fixture transcript, returns a verdict where every
   evidence `event_id` exactly matches an event_id value present in the
-  fixture transcript (not merely a plausible-looking string)
+  fixture transcript (not merely a plausible-looking string) — verified by
+  test with a mocked model response (real network call needs your key)
 - Grepping the assembled interviewer prompt/messages for rubric dimension
-  names returns zero matches
+  names returns zero matches — verified by test and by manual grep of both
+  prompt files against all 6 HLD dimension names
 
 **Verification**
 - `python -m backend.scripts.dev_question_sourcing --round hld` → output has
