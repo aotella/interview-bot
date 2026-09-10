@@ -16,10 +16,9 @@ Source of truth (read these before touching this plan):
 - `interview-prep-agent-requirements.md`
 - `interview-prep-agent-design.md`
 
-**Status: Phase 4 — Agent logic — complete, fully verified live (2026-09-10)
-against a real OpenRouter key using `z-ai/glm-5.3-flash` for all three
-roles — see the model-choice note below. Phase 5 — Session engine — not
-started.**
+**Status: Phase 5 — Session engine — complete, fully verified live
+(2026-09-10) with a full fake session run end-to-end. Phase 6 — Backend
+API surface — not started.**
 
 **Model choice note (2026-09-10):** `config.py`'s model IDs were changed
 from `anthropic/claude-sonnet-4.6` to `z-ai/glm-5.3-flash` for all three
@@ -377,7 +376,7 @@ weak-point store, and report generator are wired into the complete session
 lifecycle via direct function calls — no HTTP/UI yet.
 
 **Tasks**
-- [ ] Implement lifecycle functions in `backend/session_engine.py`:
+- [x] Implement lifecycle functions in `backend/session_engine.py`:
       `start_session(round_type)`, `save_checkpoint(session_id, text, input_mode)`,
       `attach_diagram(session_id, checkpoint_id)` (checks
       `EXCALIDRAW_EXPORT_PATH` for the most-recently-modified file, copies it
@@ -385,18 +384,20 @@ lifecycle via direct function calls — no HTTP/UI yet.
       `pause(session_id)` / `resume(session_id)` (tracks paused duration,
       excluded from elapsed time), `end_session(session_id)` (appends
       `session_end` with wall_clock/active/paused durations, finalizes
-      immutability)
-- [ ] Implement `backend/report_generator.py`: reads transcript + grader
+      immutability). No parallel in-memory session-state object — the
+      lightweight running state the interviewer needs is reconstructed
+      fresh from the transcript on every checkpoint.
+- [x] Implement `backend/report_generator.py`: reads transcript + grader
       structured output; writes Markdown into `OBSIDIAN_VAULT_PATH` with
       frontmatter (scores keyed from the round's rubric dimensions,
       weak_points, diagrams, pauses, durations, full reproducibility tuple,
       model IDs) + evidence-linked prose body; scores keys loaded from the
       rubric config, never hardcoded
-- [ ] Wire grading + weak-point update into `end_session`: on
+- [x] Wire grading + weak-point update into `end_session`: on
       `session_end`, call the grader once, persist its structured output,
       update the weak-point store per outcome, then call the report
       generator
-- [ ] Add `backend/scripts/dev_full_session_dry_run.py`: drives a full fake
+- [x] Add `backend/scripts/dev_full_session_dry_run.py`: drives a full fake
       session end-to-end via direct engine calls — start → 2-3 checkpoints →
       one pause/resume → one diagram attach → end → grade → weak-point
       update → report write
@@ -404,12 +405,31 @@ lifecycle via direct function calls — no HTTP/UI yet.
 **Definition of done**
 - A full session runs start-to-finish via direct Python calls, producing an
   immutable `.jsonl` transcript, an updated weak-point JSON file, and a
-  Markdown report in the configured vault path
+  Markdown report in the configured vault path — **verified live
+  2026-09-10** with `dev_full_session_dry_run --round hld` (run against
+  throwaway vault/excalidraw paths, not the real ones, to avoid polluting
+  real Obsidian/weak-point data with fake dry-run content — see note below)
 - Report frontmatter's `scores` keys exactly equal the active rubric's
-  dimension list for that round_type — checked programmatically
+  dimension list for that round_type — checked programmatically (enforced
+  in `report_generator.generate_report`, which raises if they don't match)
+  and confirmed live: both sets equal
+  `{capacity_estimation, deep_dive, failure_modes, high_level_design, requirements_clarification, tradeoffs_stated}`
 - Any transcript write attempted after `end_session` fails (same invariant
-  from Phase 2, now exercised through the real lifecycle)
+  from Phase 2, now exercised through the real lifecycle) — verified by
+  test and live
 - `active_seconds + paused_seconds == wall_clock_seconds` on `session_end`
+  — verified live (161 + 0 == 161) and by test
+
+**Note on `data/transcripts/` and `data/weakpoints/`:** unlike
+`OBSIDIAN_VAULT_PATH`/`EXCALIDRAW_EXPORT_PATH`, these paths are NOT env-
+configurable (by design — app-local storage, not per-machine config), so
+`dev_full_session_dry_run` always writes real transcript/weak-point files
+under this repo's `data/`. The live verification run's fake transcript and
+weak-point entries were deleted afterward so they don't bias real future
+question selection; only the Obsidian report was redirected to a throwaway
+path via env override. Keep this in mind before re-running the dry-run
+script - it always writes real (fake-content) rows to `data/transcripts/`
+and `data/weakpoints/{round_type}.json` unless you clean up after.
 
 **Verification**
 - `python -m backend.scripts.dev_full_session_dry_run --round hld` →
