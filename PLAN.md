@@ -16,8 +16,8 @@ Source of truth (read these before touching this plan):
 - `interview-prep-agent-requirements.md`
 - `interview-prep-agent-design.md`
 
-**Status: Phase 1 — Project scaffold & config — complete. Phase 2 — Data
-layer — not started.**
+**Status: Phase 2 — Data layer — complete. Phase 3 — External
+integrations — not started.**
 (Update this line every time a phase completes. Next session: start here,
 re-read this primer and the current phase's checklist state before making
 any changes.)
@@ -133,18 +133,18 @@ with their invariants enforced by real, checked code — before any agent or
 UI touches them.
 
 **Tasks**
-- [ ] Define an event_id scheme and add it as a required field on every
+- [x] Define an event_id scheme and add it as a required field on every
       event type: monotonic per-session sequence number formatted as
       `f"{session_id}_{seq:04d}"`, assigned by the transcript writer at
       append time (not by the caller) so it can never collide, including
       across multiple events at the same checkpoint_id (e.g. an edited
       candidate_turn)
-- [ ] Define pydantic models (or JSON Schema) for each transcript event type
+- [x] Define pydantic models (or JSON Schema) for each transcript event type
       in `backend/schemas.py`: `session_start`, `candidate_turn`,
       `interviewer_turn`, `pause_start`, `pause_end`, `diagram_attached`,
       `session_end` — fields per the design doc's example JSONL, plus the
       `event_id` field defined above
-- [ ] Implement an append-only transcript writer
+- [x] Implement an append-only transcript writer
       (`data/transcripts/{session_id}.jsonl`) in `backend/session_engine.py`
       (or a dedicated `transcript_store.py`) that:
   - validates and appends one JSON object per line
@@ -152,22 +152,24 @@ UI touches them.
     session_id (application-level immutability guarantee)
   - chmods the file read-only after `session_end` as the secondary
     safeguard the design doc calls for
-- [ ] Implement `backend/weakpoint_store.py`: read/write
+- [x] Implement `backend/weakpoint_store.py`: read/write
       `data/weakpoints/{round_type}.json`; enforce
       `opportunities == successes + failures + neutral` on every write
       (raise if violated); `success_streak` resets to 0 on any failure,
       increments on success; `last_seen` updates only when `opportunities`
-      increments — **tag vocabulary here depends on Flagged item 3**
-- [ ] Author `backend/rubrics/hld_v1.yaml` with the 6 dimensions implied by
+      increments — **tag vocabulary here depends on Flagged item 3** (tags
+      are treated as opaque strings here; which vocabulary callers use is
+      still unresolved)
+- [x] Author `backend/rubrics/hld_v1.yaml` with the 6 dimensions implied by
       the design doc's frontmatter example; mark anchor text as TODO
       (**Flagged item 1**)
-- [ ] Author `backend/rubrics/lld_deepdive_v1.yaml` — do not invent the
+- [x] Author `backend/rubrics/lld_deepdive_v1.yaml` — do not invent the
       dimension list by analogy to HLD; stub with an explicit TODO block
       until Flagged item 2 is resolved
-- [ ] Write a rubric loader that reads dimension names from YAML rather than
+- [x] Write a rubric loader that reads dimension names from YAML rather than
       hardcoding HLD/LLD field names (this is what report generation later
       depends on)
-- [ ] Write pytest tests: valid event round-trip, rejected write after
+- [x] Write pytest tests: valid event round-trip, rejected write after
       `session_end`, weak-point invariant enforcement (including a
       deliberately-broken update raising), rubric loader returning the
       correct dimension set per round_type

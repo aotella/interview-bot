@@ -1,0 +1,21 @@
+# LLD/Deep-dive rubric v1.
+#
+# TODO: BLOCKED on Flagged item 2 in PLAN.md.
+#
+# Neither interview-prep-agent-requirements.md nor
+# interview-prep-agent-design.md gives a worked dimension list for this
+# round type (HLD has one, via the design doc's frontmatter example; LLD/
+# Deep-dive - a combined round covering low-level/OO design AND
+# resume-driven project deep-dive - has none). Do not invent this list by
+# analogy to HLD's 6 dimensions; it needs its own authoring pass that
+# accounts for both halves of the round (OO/class design *and* deep-dive
+# probing of a real project).
+#
+# `dimensions` is deliberately left empty until that pass happens. Any code
+# that depends on this rubric having real dimensions (report generation,
+# grading) is not usable for this round type yet - that's expected at this
+# phase.
+round_type: lld_deepdive
+version: lld_deepdive_v1
+score_range: [1, 4]
+dimensions: []
