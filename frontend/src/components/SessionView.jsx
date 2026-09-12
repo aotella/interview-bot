@@ -18,7 +18,7 @@ export default function SessionView({ session, onEnded }) {
   const [diagramMsg, setDiagramMsg] = useState(null);
   const [ending, setEnding] = useState(false);
 
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(session.elapsed_seconds || 0);
   const startedAtRef = useRef(Date.now());
 
   useEffect(() => {

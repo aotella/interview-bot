@@ -36,10 +36,11 @@ function ScoreTrend({ sessions }) {
   );
 }
 
-export default function HistoryView({ onBack }) {
+export default function HistoryView({ onBack, onResume }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [resumingId, setResumingId] = useState(null);
 
   useEffect(() => {
     api
@@ -48,6 +49,20 @@ export default function HistoryView({ onBack }) {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  async function handleResume(s) {
+    setResumingId(s.session_id);
+    setError(null);
+    try {
+      if (s.paused) {
+        await api.resume(s.session_id);
+      }
+      onResume(s);
+    } catch (e) {
+      setError(e.message);
+      setResumingId(null);
+    }
+  }
 
   return (
     <div className="history-view">
@@ -70,6 +85,15 @@ export default function HistoryView({ onBack }) {
                 <span className="session-status">
                   {s.status === "ended" ? s.verdict || "graded pending" : "in progress"}
                 </span>
+                {s.status === "in_progress" && (
+                  <button
+                    className="resume-button"
+                    onClick={() => handleResume(s)}
+                    disabled={resumingId === s.session_id}
+                  >
+                    {resumingId === s.session_id ? "Resuming..." : s.paused ? "Resume" : "Continue"}
+                  </button>
+                )}
               </li>
             ))}
             {sessions.length === 0 && <li className="muted">No sessions yet.</li>}

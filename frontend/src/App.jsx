@@ -36,6 +36,11 @@ export default function App() {
     setView("round-select");
   }
 
+  function handleResume(sessionSummary) {
+    setSession(sessionSummary);
+    setView("session");
+  }
+
   return (
     <div className="app">
       {view !== "session" && (
@@ -65,7 +70,7 @@ export default function App() {
         </div>
       )}
 
-      {view === "history" && <HistoryView onBack={handleStartOver} />}
+      {view === "history" && <HistoryView onBack={handleStartOver} onResume={handleResume} />}
     </div>
   );
 }
