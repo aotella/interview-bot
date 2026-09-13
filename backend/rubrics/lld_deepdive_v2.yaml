@@ -1,0 +1,212 @@
+# LLD/Deep-dive rubric v2.
+#
+# Dimension list resolved 2026-09-12 (Flagged item 2 in PLAN.md) - tailored
+# to both halves of this combined round (LLD/OO design AND resume-driven
+# project deep-dive), per interviewer_lld_deepdive_v1.md's own framing, not
+# invented by analogy to HLD's 6 dimensions - unchanged from v1. Anchor text
+# authored 2026-09-13 (Flagged item 1 in PLAN.md, resolved), replacing v1's
+# TODO stubs - same senior/staff calibration as hld_v2.yaml: 3 is "hire at
+# that level on this dimension," 4 is depth that stands out even among
+# senior candidates. Several dimensions apply differently depending on
+# which half of the round is live (LLD design vs. project deep-dive) -
+# anchors say so explicitly where the behavior differs. Version bumped from
+# v1 because the anchor text IS the grading criteria - sessions graded
+# under v1 used TODO placeholders and are not comparable to sessions graded
+# under v2.
+round_type: lld_deepdive
+version: lld_deepdive_v2
+score_range: [1, 4]
+dimensions:
+  - name: requirements_clarification
+    description: >-
+      Scopes the LLD problem (which actors/classes are in scope, what
+      functionality is required) before designing, or frames what part of
+      their own project they intend to describe before diving in.
+    anchors:
+      1: >-
+        Starts writing classes/interfaces immediately with no scoping, or
+        (deep-dive half) launches into project narration with no framing of
+        what part they'll focus on or why.
+      2: >-
+        Scopes some of the problem but misses a functional requirement that
+        later causes rework or a gap in the design (e.g. omits a stated use
+        case), or the deep-dive framing is vague enough that the interviewer
+        has to redirect to get specifics.
+      3: >-
+        States which entities/behaviors are in scope and which are
+        explicitly out, matching the actual ask, before designing; or
+        (deep-dive) states upfront which system/decision they'll cover and
+        enough concrete context (their specific role, the system's scale,
+        the rough timeframe) for the interviewer to know what's fair game
+        to probe. A rehearsed opener that asserts the example is impressive
+        ("this really shows my ownership") without that concrete context
+        does not meet this bar - self-assessment isn't scoping.
+      4: >-
+        Meets 3, and the scoping itself shows judgment - e.g. explicitly
+        excludes a tempting but out-of-scope feature with a stated reason,
+        or (deep-dive) the concrete context volunteered already anticipates
+        the kind of depth they're likely to be probed on (e.g. flags the
+        one gnarly part of the system upfront, before being asked).
+  - name: class_and_interface_design
+    description: >-
+      Object modeling quality: cohesive classes, clear interfaces/contracts,
+      appropriate encapsulation and abstraction boundaries for the given
+      problem.
+    anchors:
+      1: >-
+        Classes are a thin restatement of nouns in the prompt with no real
+        behavior/contract definition, or responsibilities are muddled (one
+        class doing unrelated things, or logic duplicated across classes
+        that should share an interface).
+      2: >-
+        Class structure is workable but has a real cohesion or encapsulation
+        issue - a class exposes internal state it shouldn't, or an interface
+        is defined only after the interviewer asks "what would the API for
+        that look like." Also caps here if inheritance/composition is used
+        inappropriately - a subtype that violates the supertype's contract
+        (breaks substitutability), or a hierarchy reached for where
+        composition would better reflect the actual relationship.
+      3: >-
+        Classes have single, clear responsibilities; interfaces/contracts
+        between them are stated (method signatures or equivalent, not just
+        class names) unprompted; encapsulation boundaries make sense for the
+        problem (state that should be private is private, shared behavior is
+        factored out).
+      4: >-
+        Meets 3, and demonstrates a specific abstraction decision that
+        resolves a real design tension in this problem (e.g. an interface
+        that lets two variants of a behavior coexist without the caller
+        knowing which, or a boundary chosen specifically to isolate the part
+        of the design most likely to change).
+  - name: concurrency_and_edge_cases
+    description: >-
+      Identifies and correctly reasons about concurrency (thread-safety,
+      race conditions) and edge cases in the OO design, or in the
+      deep-dive project's actual failure scenarios.
+    anchors:
+      1: >-
+        No concurrency/edge-case consideration unless the interviewer
+        forces it, and even then the answer is a hand-wave ("add a lock" /
+        "we retried it") with no identification of what specifically
+        races or what specifically broke.
+      2: >-
+        Identifies that a race condition or edge case exists but the fix is
+        incomplete or introduces a new problem (e.g. a lock that doesn't
+        cover the actual critical section; a retry with no idempotency
+        story); (deep-dive) names a failure but not what the team actually
+        did about it.
+      3: >-
+        Correctly identifies the specific race/edge case (which operations
+        conflict, under what interleaving) and states a mechanism that
+        actually resolves it, scoped no more broadly than the actual
+        critical section (correct lock scope, atomic operation, CAS,
+        state-machine guard) - an unacknowledged, egregiously coarse-grained
+        lock (e.g. synchronizing an entire method/class when only a few
+        lines need it) caps at 2, even though it technically prevents the
+        race; (deep-dive) describes a real failure mode encountered and the
+        concrete mitigation shipped.
+      4: >-
+        Meets 3, and reasons about a second-order consequence of the fix
+        itself (contention/throughput cost of the chosen synchronization, a
+        remaining edge case the fix doesn't cover, or a trade-off the fix
+        introduces) rather than treating the fix as the end of the
+        analysis.
+  - name: extensibility_tradeoffs
+    description: >-
+      Explicitly reasons about extensibility vs. simplicity - when to
+      generalize an interface/abstraction and when that would be
+      over-engineering, stated as a deliberate trade-off rather than either
+      extreme by default.
+    anchors:
+      1: >-
+        Design is either rigidly hardcoded against an obvious near-term
+        variation (e.g. a switch statement over types that the prompt
+        implies will grow) with no acknowledgment, or over-abstracted with
+        generic interfaces/factories the problem never calls for, with no
+        stated reason for the extra layer.
+      2: >-
+        Shows awareness that a generalization/simplification choice exists
+        but doesn't defend it in problem-specific terms ("I'll make this
+        an interface in case we need more later," with no "later"
+        specified) - including hedging every decision with the same generic
+        caveat regardless of whether that decision is actually this
+        problem's extension point, rather than naming a specific, concrete
+        future requirement that would trigger the generalization.
+      3: >-
+        At a real extension point, explicitly states the trade-off - either
+        "generalize now because X is likely to vary, at the cost of Y
+        complexity" or "keep this concrete because generalizing now would
+        be speculative" - grounded in something the problem or interviewer
+        actually said.
+      4: >-
+        Meets 3, and revisits the decision when new information arrives
+        (a follow-up requirement, or a deep-dive detail) - showing the
+        extensibility line was a live judgment, not a one-time guess (e.g.
+        "given that new requirement, I'd now pull this into an interface,
+        which I deliberately didn't do earlier").
+  - name: deep_dive_depth
+    description: >-
+      For the resume-driven project half: demonstrates real ownership and
+      depth under follow-up questioning (specific numbers, decisions,
+      failure modes actually encountered) rather than a rehearsed, generic
+      summary.
+    anchors:
+      1: >-
+        Description stays at the level of a resume bullet even after
+        follow-ups ("we improved reliability") with no specific numbers,
+        decisions, or names of the actual mechanisms involved.
+      2: >-
+        Gives some specifics when pushed, but they read as generic to the
+        technology rather than particular to this system (e.g. describes
+        what caching in general does, not what this system's cache
+        actually held or why it was sized that way).
+      3: >-
+        Answers follow-ups with specifics that could only come from having
+        actually built it: real numbers (traffic, latency, team size,
+        timeline), a decision they personally made and why, or a failure
+        they personally debugged. Check numeric consistency across turns
+        (a number given late in the deep-dive should not contradict one
+        given earlier) - specificity alone isn't a substitute for
+        consistency, since fabricated numbers can also sound specific.
+      4: >-
+        Meets 3, and volunteers the messy part unprompted - a decision that
+        didn't work out, a trade-off they'd make differently now, or a
+        constraint (organizational, not just technical) that shaped the
+        design - the kind of detail that's hard to fabricate and signals
+        real ownership rather than a well-rehearsed success story.
+  - name: communication_of_tradeoffs
+    description: >-
+      Structure and clarity of the explanation itself, independent of
+      whether the underlying reasoning was any good or offered
+      unprompted - can a listener follow "here were the options, here's
+      the criterion that decided it, here's what I gave up" without having
+      to reconstruct it themselves. Whether reasoning existed at all and
+      was volunteered proactively is already scored under
+      `class_and_interface_design`, `extensibility_tradeoffs`, and
+      `deep_dive_depth`'s own ladders - this dimension does not re-score
+      that; it scores whether it was communicated legibly once it existed,
+      so it stays independent rather than riding on the same evidence.
+    anchors:
+      1: >-
+        Reasoning (where it exists elsewhere in the transcript) is buried
+        mid-explanation, out of order, or requires the listener to infer
+        which option was rejected and why - the interviewer has to ask a
+        clarifying question just to recover the structure of the decision
+        that was already made.
+      2: >-
+        The decision and one option are recoverable, but the explanation
+        runs together multiple decisions or jumps between them without
+        signposting which trade-off is being discussed, or omits what was
+        given up (states the benefit of the choice but not its cost).
+      3: >-
+        At least one real decision per half of the round (LLD and
+        deep-dive) is explained in a listener-followable structure: what
+        the options were, what criterion decided it, and what was given up
+        - in that order or clearly enough marked that the order doesn't
+        matter.
+      4: >-
+        Meets 3, at multiple decision points across both halves, and the
+        articulation is precise enough that a listener could predict how
+        the candidate would decide a similar but new trade-off using the
+        same stated criterion - the explanation transfers, not just
+        documents.

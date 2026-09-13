@@ -11,7 +11,7 @@ def test_hld_dimension_set():
         "tradeoffs_stated",
         "failure_modes",
     }
-    assert rubric.version == "hld_v1"
+    assert rubric.version == "hld_v2"
     assert rubric.round_type == "hld"
 
 
@@ -25,7 +25,7 @@ def test_lld_deepdive_dimension_set():
         "deep_dive_depth",
         "communication_of_tradeoffs",
     }
-    assert rubric.version == "lld_deepdive_v1"
+    assert rubric.version == "lld_deepdive_v2"
     assert rubric.round_type == "lld_deepdive"
     # Tailored to its own two-halves framing, not inherited from HLD by analogy.
     assert set(rubric.dimension_names()) != set(load_rubric("hld").dimension_names())

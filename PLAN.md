@@ -172,6 +172,39 @@ opposed to stubbed) until decided.
    `data/reports/*.json`, left untouched as historical record) — treat
    those scores as provisional/uncalibrated, not a baseline to compare
    future v2-graded sessions against.
+
+   **Review pass (2026-09-13):** before trusting this anchor text, had a
+   fresh agent play a principal/staff engineer — someone who'd actually
+   have to trust this rubric to grade their own transcript — critique both
+   files for discriminative power, internal consistency, bar realism,
+   gameability, coverage gaps, and cross-dimension overlap. First pass
+   found four high-priority issues: `lld_deepdive_v2`'s
+   `communication_of_tradeoffs` triple-counted a skill already scored by
+   three other dimensions; no dimension distinguished "candidate failed
+   this" from "interviewer never raised it," so a passive interviewer turn
+   would silently penalize the candidate; `hld_v2`'s `failure_modes`
+   anchor 3 required covering *every* failure mode the question raised
+   (an all-or-nothing bar inconsistent with the "at least one, done well"
+   pattern used everywhere else); and `capacity_estimation`/
+   `high_level_design` were gameable by templated answers that nominally
+   satisfy the anchor text without the design actually depending on this
+   problem's specifics. Fixed the first, third, and fourth directly in the
+   anchor text (plus several smaller dimension-specific fixes: LSP/
+   composition misuse, coarse-grained-locking, hedge-everything,
+   self-assessed-ownership framing, cross-turn numeric consistency, scope-
+   drift) and had the same reviewer re-check the revision against concrete
+   transcript scenarios before calling it aligned. **Deliberately deferred,
+   not fixed:** the no-evidence/N/A gap needs a `GraderOutput` schema
+   change (`score: int` doesn't support "not applicable") - out of scope
+   for an anchor-text pass, flagged to the user as the next thing worth
+   prioritizing rather than silently changing the schema mid-review. Two
+   other residuals were flagged as non-blocking and intentionally left as
+   documented rather than fixed: `capacity_estimation`'s edge case where
+   correct-but-unused math with a minor non-decision-changing error doesn't
+   map cleanly to either anchor 1 or 2, and `tradeoffs_stated`'s soft
+   dependency on `requirements_clarification`/`capacity_estimation` having
+   produced a citable session artifact earlier (rare in practice, since
+   clarification typically happens first).
 2. ~~**LLD/Deep-dive rubric dimension list.**~~ **Resolved 2026-09-12:**
    authored as part of the post-launch feature pass below — 6 dimensions
    tailored to both halves of the round (`requirements_clarification`,
@@ -221,6 +254,27 @@ opposed to stubbed) until decided.
    checkpoint {checkpoint_id} could not be loaded") rather than aborting
    the whole grading call — one bad image shouldn't block grading the rest
    of the session.**
+7. **No-evidence/N/A scoring.** Surfaced by the 2026-09-13 rubric review
+   pass (see Flagged item 1's review-pass note above). Every dimension's
+   anchor 1 describes candidate *failure* in language a grader can't
+   distinguish from "the interviewer never raised this topic in the
+   session." A rushed or unlucky interviewer pass currently means the
+   candidate gets scored 1 on a dimension they were never actually tested
+   on, and that bad score feeds directly into `weakpoint_store` and biases
+   future question selection toward a topic that isn't actually a
+   weakness. Not resolved — needs a decision, not just anchor wording:
+   `agent_schemas.DimensionScore.score` is `int` (1-4), so representing
+   "not applicable" means widening that type (`int | None`, or a
+   sentinel), deciding what `weakpoint_store`'s
+   `opportunities == successes + failures + neutral` invariant does with
+   an N/A dimension (presumably: doesn't count as an opportunity at all,
+   rather than as a neutral outcome), and updating both grader prompts to
+   actually emit it instead of guessing. Touches `agent_schemas.py`,
+   `grader_agent.py`, both `grader_{hld,lld_deepdive}_v1.md` prompts,
+   `weakpoint_store.py`, and probably `report_generator.py`/`ReportView`'s
+   rendering of a dimension with no score — real scope, not a quick patch.
+   Blocks: fully trusting weak-point data from any session where the
+   interviewer didn't probe every dimension (i.e. most sessions).
 
 ---
 

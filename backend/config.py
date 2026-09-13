@@ -70,8 +70,8 @@ models = Models(
 # prompt/rubric file changes. Kept alongside the model IDs above so a
 # session/report can be traced back to exactly what produced it.
 rubric_version = RubricVersions(
-    hld="hld_v1",
-    lld_deepdive="lld_deepdive_v1",
+    hld="hld_v2",
+    lld_deepdive="lld_deepdive_v2",
 )
 interviewer_prompt_version = "v1"
 grader_prompt_version = "v1"

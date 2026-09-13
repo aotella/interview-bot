@@ -1,0 +1,200 @@
+# HLD rubric v2.
+#
+# Dimension list per the design doc's report-frontmatter example
+# (interview-prep-agent-design.md) - unchanged from v1. Anchor text authored
+# 2026-09-13 (Flagged item 1 in PLAN.md, resolved), replacing v1's TODO
+# stubs - calibrated to a senior/staff (L5/E5-ish) bar: a 3 is "hire at that
+# level, no reservations on this dimension"; a 4 is reserved for depth that
+# would stand out even among senior candidates, not just correctness. A 1-2
+# does not mean "said nothing" - it means what was said fell short of the
+# senior bar on this dimension specifically, per the anchor text. Version
+# bumped from v1 because the anchor text IS the grading criteria - sessions
+# graded under v1 used TODO placeholders and are not comparable to sessions
+# graded under v2.
+round_type: hld
+version: hld_v2
+score_range: [1, 4]
+dimensions:
+  - name: requirements_clarification
+    description: >-
+      Scopes the problem before designing: surfaces the ambiguous/unstated
+      variables the question hinges on (scale, consistency needs, which
+      features are in/out of scope, read/write mix) and either asks or
+      states a reasoned assumption, rather than designing against an
+      imagined default.
+    anchors:
+      1: >-
+        Starts designing immediately against unstated assumptions, or asks
+        only surface-level/non-load-bearing questions (e.g. naming, not
+        scale or consistency). The chosen scope is never made explicit.
+      2: >-
+        Asks or assumes on some load-bearing variables but misses others
+        that materially change the design (e.g. gets scale but not
+        consistency requirements, or vice versa); scope is partially
+        explicit. Also caps here regardless of how good the clarification
+        was if the later design silently contradicts a stated assumption or
+        answer (e.g. confirms "eventual consistency is fine" then builds a
+        strongly-consistent path with no comment on the discrepancy) - a
+        clarification disconnected from the design it's supposed to inform
+        earns no more credit than not asking.
+      3: >-
+        Identifies the variables that actually drive design decisions for
+        this question and either clarifies or states explicit, reasonable
+        assumptions for each, framing scope (in/out) before moving to
+        estimation or architecture.
+      4: >-
+        Does everything in 3, and the clarification itself reveals design
+        judgment - e.g. distinguishes which unstated variables would change
+        the architecture vs. which are just tuning, or proactively separates
+        distinct traffic/consistency classes (transactional vs. bulk,
+        read-heavy vs. write-heavy) that the question doesn't explicitly
+        call out but that turn out to matter later in the same session.
+  - name: capacity_estimation
+    description: >-
+      Back-of-envelope math (QPS, storage, bandwidth) that is directionally
+      correct and actually used to drive design decisions, not performed as
+      a disconnected ritual.
+    anchors:
+      1: >-
+        No estimation attempted, or numbers are asserted without derivation
+        and never referenced again during the design; or the math has a
+        load-bearing order-of-magnitude/unit error that changes a real
+        design conclusion (e.g. wrongly concludes sharding or caching is
+        unnecessary) - a wrong number that steers the design is worse than
+        no number at all, so it scores no higher than skipping estimation
+        entirely.
+      2: >-
+        Math is directionally correct (right order of magnitude) but the
+        resulting numbers are never connected to a design decision (sizing,
+        partitioning, caching, provider choice) - correct but purely
+        ceremonial.
+      3: >-
+        Derives directionally correct numbers (order of magnitude right)
+        from stated assumptions, and a specific parameter of a downstream
+        decision (partition count, cache size, fleet size, headroom
+        multiplier) is arithmetically derived from the estimate - not just
+        a qualitative gesture toward one ("so we'll need caching"). The
+        decision must actually depend on the number, not merely be
+        mentioned near it.
+      4: >-
+        Numbers are correct, derived, AND multiple decisions downstream
+        trace back to them (throughput sizes a specific component, storage
+        volume rules out or justifies a storage choice, a burst multiplier
+        sizes headroom) - estimation functions as a genuine design input
+        across the session, not a single isolated step.
+  - name: high_level_design
+    description: >-
+      Structural correctness and fit of the end-to-end architecture itself
+      - would it work, are service/component boundaries sensible for this
+      problem's shape - independent of whether the candidate articulated
+      *why* each choice was made (that reasoning is scored under
+      `tradeoffs_stated`; don't double-score the same sentence here).
+    anchors:
+      1: >-
+        Component list is generic/boilerplate (a stock "load balancer -
+        app server - database" diagram) with no visible connection to this
+        question's specific requirements or scale; or the design has a
+        structural gap that breaks a stated core requirement.
+      2: >-
+        Architecture is functionally complete, but one major component's
+        role is unclear or inconsistent with how it's used later, or a
+        boundary between services doesn't hold up (responsibilities
+        overlap or a dependency direction creates a cycle).
+      3: >-
+        End-to-end architecture where boundaries between services/components
+        are sensible for this problem's shape, the design would plausibly
+        work if built, and at least one component or boundary choice would
+        change if a stated requirement or scale number were different - the
+        design isn't a fixed template with nouns swapped in; it responds to
+        this problem's actual shape.
+      4: >-
+        Meets 3, and the design specifically targets the problem's actual
+        hard part (the thing that makes this question non-generic) rather
+        than treating it as a generic CRUD-plus-cache exercise - e.g. an
+        explicit mechanism for the stated failure/consistency/scale
+        challenge, not just a component that happens to be adjacent to it.
+  - name: deep_dive
+    description: >-
+      Depth on a specific component under interviewer probing: mechanism-
+      level detail (data structures, protocols, state transitions, specific
+      algorithms) rather than restating the high-level design at finer
+      grain.
+    anchors:
+      1: >-
+        When probed, restates the high-level design in the same terms as
+        before, or the answer is vague ("it would handle that
+        automatically") with no mechanism.
+      2: >-
+        Provides some mechanism-level detail but it is incomplete, internally
+        inconsistent with the earlier high-level design, or stops short of
+        the specific thing the interviewer asked about.
+      3: >-
+        Answers the specific probe with real mechanism: concrete data
+        structures, protocol/algorithm choice, or state-transition logic
+        that is consistent with the rest of the design and resolves the
+        interviewer's question.
+      4: >-
+        Meets 3, and volunteers adjacent depth the interviewer didn't
+        explicitly ask for but that's clearly relevant (edge cases in the
+        mechanism, a specific number/threshold, a known failure mode of the
+        chosen approach) - depth the candidate clearly already had, not
+        depth extracted turn by turn.
+  - name: tradeoffs_stated
+    description: >-
+      Names alternatives considered and the specific reason one was chosen
+      over another, rather than presenting the chosen approach as the only
+      option.
+    anchors:
+      1: >-
+        Presents design choices as facts with no acknowledgment that
+        alternatives exist, even at points where the choice is genuinely
+        debatable (e.g. SQL vs. NoSQL, sync vs. async, strong vs. eventual
+        consistency).
+      2: >-
+        Names an alternative when directly asked ("why not X?") but the
+        reasoning is thin ("X is slower") without connecting it to this
+        problem's specific requirements.
+      3: >-
+        Proactively (not only when asked) names at least one real
+        alternative at a major decision point and gives a reason for the
+        choice made that cites a concrete artifact stated earlier in this
+        same session (a specific scale/estimation number, an explicit
+        consistency requirement, a named use case from clarification) -
+        not a generic, portable pro/con that would apply verbatim to any
+        system ("SQL gives ACID but doesn't scale as easily" is a cliche
+        until it's tied to this session's actual numbers or requirements).
+      4: >-
+        Meets 3, at multiple distinct decision points across the session,
+        and at least one trade-off is costed concretely (a specific
+        operational, latency, or consistency cost of the rejected option)
+        rather than described only qualitatively.
+  - name: failure_modes
+    description: >-
+      Reasons about what breaks (component failure, partial outages,
+      network partitions, downstream degradation) and what the system does
+      in response, not just the happy path.
+    anchors:
+      1: >-
+        Failure scenarios are not addressed unless the interviewer forces
+        the issue, and even then the answer is "it would retry" or
+        "it would fail over" with no mechanism.
+      2: >-
+        Identifies that a failure mode matters but the mitigation is vague
+        or incomplete (doesn't address what happens to in-flight requests,
+        or ignores a failure mode that's clearly implied by the question's
+        own framing, e.g. a stated partial-outage scenario).
+      3: >-
+        For the failure mode(s) the question most directly raises, states a
+        concrete system behavior: what degrades, what the fallback is, what
+        the user/caller observes. (Matches the "at least one, done well"
+        bar used elsewhere in this rubric - a session where the interviewer
+        raises three scenarios isn't held to a stricter standard than one
+        where only one was raised.)
+      4: >-
+        Either (a) meets 3 for every failure mode raised in the session,
+        including ones only implied by the architecture rather than asked
+        outright, or (b) meets 3 for one and additionally reasons about
+        compounding/cascading failure (what happens when two things fail
+        together, or when a mitigation for one failure mode creates load
+        that threatens another part of the system) rather than treating
+        failure modes in isolation.
