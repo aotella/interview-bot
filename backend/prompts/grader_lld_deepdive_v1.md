@@ -36,10 +36,6 @@ session, report exactly one outcome:
 Skip a dimension in `weak_point_outcomes` only if it was never actually
 testable in this session.
 
-NOTE: this rubric is currently unpopulated pending a dedicated authoring
-pass (see PLAN.md Flagged item 2). Do not run a real grading session
-against it until it has real dimensions.
-
 Respond with ONLY a single JSON object, no prose, no markdown fences,
 matching this shape:
 {

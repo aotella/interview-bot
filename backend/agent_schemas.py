@@ -35,6 +35,7 @@ class CheckpointSummary(BaseModel):
     checkpoint_id: str
     candidate_text: str
     action: Literal["continue", "follow_up", "interject"]
+    interviewer_text: str | None = None
 
 
 class PauseRecord(BaseModel):
@@ -86,3 +87,11 @@ class DiagramImage(BaseModel):
     path: str
     media_type: Literal["image/png", "image/svg+xml"]
     data_base64: str
+
+
+# --- Solver ------------------------------------------------------------
+
+
+class SolverResponse(BaseModel):
+    text: str
+    done: bool

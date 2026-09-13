@@ -37,4 +37,21 @@ export const api = {
   getSession: (sessionId) => request(`/sessions/${sessionId}`),
 
   listSessions: () => request("/sessions"),
+
+  getReport: (sessionId) => request(`/sessions/${sessionId}/report`),
+
+  getTranscript: (sessionId) => request(`/sessions/${sessionId}/transcript`),
+
+  getWeakpoints: (roundType) => request(`/weakpoints/${roundType}`),
+
+  runSolverComparison: (sessionId) =>
+    request(`/sessions/${sessionId}/solver-comparison`, { method: "POST" }),
+
+  studyGuideUrl: (sessionId) => `${API_BASE}/sessions/${sessionId}/study-guide`,
+
+  studyGuideExists: (sessionId) =>
+    request(`/sessions/${sessionId}/study-guide/exists`).then((r) => r.exists),
+
+  generateStudyGuide: (sessionId) =>
+    request(`/sessions/${sessionId}/study-guide`, { method: "POST" }),
 };

@@ -99,3 +99,80 @@ def test_grader_rejects_invented_event_id_and_raises_after_retries(monkeypatch):
 
     with pytest.raises(GraderOutputError):
         grade_transcript(session_id)
+
+
+_LLD_DIMENSIONS = [
+    "requirements_clarification",
+    "class_and_interface_design",
+    "concurrency_and_edge_cases",
+    "extensibility_tradeoffs",
+    "deep_dive_depth",
+    "communication_of_tradeoffs",
+]
+
+
+def _build_fixture_transcript_lld(session_id: str) -> None:
+    append_event(
+        session_id,
+        "session_start",
+        {
+            "session_id": session_id,
+            "round_type": "lld_deepdive",
+            "question": "Design a parking lot",
+            "question_provenance": {
+                "source_urls": ["https://example.com/q2"],
+                "discovered_at": "t0",
+                "target_level": "SSE",
+                "seniority_eval": "ok",
+            },
+            "timestamp": "t0",
+        },
+    )
+    append_event(
+        session_id,
+        "candidate_turn",
+        {"checkpoint_id": "cp_1", "text": "no concurrency handling mentioned", "input_mode": "typed", "timestamp": "t1"},
+    )
+    append_event(
+        session_id,
+        "interviewer_turn",
+        {"checkpoint_id": "cp_1", "action": "interject", "text": "what about concurrent spot reservations?", "timestamp": "t2"},
+    )
+    append_event(
+        session_id,
+        "session_end",
+        {"wall_clock_seconds": 100, "active_seconds": 100, "paused_seconds": 0, "timestamp": "t3"},
+    )
+
+
+def test_grader_accepts_valid_lld_output_with_real_event_ids(monkeypatch):
+    session_id = "s_grader_lld_ok"
+    _build_fixture_transcript_lld(session_id)
+
+    real_event_id = f"{session_id}_0002"  # the candidate_turn event
+
+    def fake_complete(role, messages, **kwargs):
+        assert role == "grader"
+        return json.dumps(
+            {
+                "verdict": "REJECT",
+                "dimensions": [
+                    {
+                        "dimension": dim,
+                        "score": 1,
+                        "evidence": [{"event_id": real_event_id, "reason": "example"}],
+                    }
+                    for dim in _LLD_DIMENSIONS
+                ],
+                "weak_point_outcomes": [
+                    {"tag": "concurrency_and_edge_cases", "outcome": "failure"},
+                ],
+            }
+        )
+
+    monkeypatch.setattr("backend.structured_llm.complete", fake_complete)
+
+    output = grade_transcript(session_id)
+
+    assert output.verdict == "REJECT"
+    assert {d.dimension for d in output.dimensions} == set(_LLD_DIMENSIONS)

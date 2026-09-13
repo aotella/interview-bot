@@ -8,10 +8,11 @@ function formatElapsed(totalSeconds) {
 }
 
 export default function SessionView({ session, onEnded }) {
+  const [turns, setTurns] = useState([]); // [{ speaker: "candidate"|"interviewer", action, text }]
+  const [loadingHistory, setLoadingHistory] = useState(true);
   const [answerText, setAnswerText] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [lastDecision, setLastDecision] = useState(null); // { action, text }
   const [lastCheckpointId, setLastCheckpointId] = useState(null);
   const [paused, setPaused] = useState(false);
   const [pausePending, setPausePending] = useState(false);
@@ -19,7 +20,21 @@ export default function SessionView({ session, onEnded }) {
   const [ending, setEnding] = useState(false);
 
   const [elapsedSeconds, setElapsedSeconds] = useState(session.elapsed_seconds || 0);
-  const startedAtRef = useRef(Date.now());
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    api
+      .getTranscript(session.session_id)
+      .then((t) => setTurns(t.turns))
+      .catch((e) => setError(e.message))
+      .finally(() => setLoadingHistory(false));
+  }, [session.session_id]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [turns]);
 
   useEffect(() => {
     if (paused) return;
@@ -33,13 +48,19 @@ export default function SessionView({ session, onEnded }) {
     if (!answerText.trim() || saving) return;
     setSaving(true);
     setError(null);
+    const text = answerText;
+    setTurns((prev) => [...prev, { speaker: "candidate", action: null, text }]);
+    setAnswerText("");
     try {
-      const result = await api.saveCheckpoint(session.session_id, answerText, "typed");
+      const result = await api.saveCheckpoint(session.session_id, text, "typed");
       setLastCheckpointId(result.checkpoint_id);
-      setLastDecision(result.action === "continue" ? null : result);
-      setAnswerText("");
+      if (result.action !== "continue") {
+        setTurns((prev) => [...prev, { speaker: "interviewer", action: result.action, text: result.text }]);
+      }
     } catch (e) {
       setError(e.message);
+      setAnswerText(text);
+      setTurns((prev) => prev.slice(0, -1));
     } finally {
       setSaving(false);
     }
@@ -92,6 +113,26 @@ export default function SessionView({ session, onEnded }) {
 
       <div className="question-panel">{session.question}</div>
 
+      <div className="chat-scroll" ref={scrollRef}>
+        {loadingHistory && <p className="muted">Loading...</p>}
+        {!loadingHistory && turns.length === 0 && (
+          <p className="muted">Your answers and the interviewer's follow-ups will appear here.</p>
+        )}
+        {turns.map((t, i) => (
+          <div
+            key={i}
+            className={
+              t.speaker === "candidate" ? "transcript-turn transcript-turn--candidate" : `transcript-turn inline-panel--${t.action}`
+            }
+          >
+            <span className="transcript-turn-label">
+              {t.speaker === "candidate" ? "You" : t.action === "interject" ? "Interjection" : "Follow-up"}
+            </span>
+            {t.text}
+          </div>
+        ))}
+      </div>
+
       <textarea
         className="answer-input"
         value={answerText}
@@ -100,15 +141,12 @@ export default function SessionView({ session, onEnded }) {
         disabled={paused || saving || ending}
       />
 
-      {lastDecision && (
-        <div className={`inline-panel inline-panel--${lastDecision.action}`}>
-          <strong>{lastDecision.action === "interject" ? "Interjection" : "Follow-up"}:</strong>{" "}
-          {lastDecision.text}
-        </div>
-      )}
-
       <div className="session-controls">
-        <button onClick={handleSaveCheckpoint} disabled={saving || paused || ending || !answerText.trim()}>
+        <button
+          className="btn-primary"
+          onClick={handleSaveCheckpoint}
+          disabled={saving || paused || ending || !answerText.trim()}
+        >
           {saving ? "Saving..." : "Save Checkpoint"}
         </button>
         <button onClick={handleTogglePause} disabled={pausePending || ending}>

@@ -8,21 +8,115 @@ checkpoint loop (continue / follow-up / interject) against candidate answers;
 a separate "grader" agent evaluates the finished transcript against a hidden
 rubric, producing a binary verdict, per-dimension scores, and weak-point
 tracking that biases future question selection. Sessions are stored as
-immutable JSONL transcripts locally, with a derived Markdown report written
-into an Obsidian vault. Backend is FastAPI/Python, frontend is React/Vite,
-model calls go through OpenRouter.
+immutable JSONL transcripts locally, with a derived JSON report record
+(`data/reports/{session_id}.json`) as the sole persisted report - Obsidian
+was dropped in Phase 10, see below. Backend is FastAPI/Python, frontend is
+React/Vite, model calls go through OpenRouter.
 
 Source of truth (read these before touching this plan):
 - `interview-prep-agent-requirements.md`
 - `interview-prep-agent-design.md`
 
-**Status: Phase 7 — Frontend — built and building cleanly (`npm run build`
-succeeds), but NOT verified in an actual browser - Chrome extension access
-was declined this session, so no automated click-through was possible. The
-dev server (`npm run dev`, :5173) and backend (`python -m backend.app`,
-:8000, using your real `.env`) were both left running at end of session for
-you to do the manual walkthrough yourself. Phase 8 — End-to-end pass — not
-started.**
+**Status (updated 2026-09-13):** Phase 7's original browser-click-through
+caveat is superseded by events, not by a dedicated verification pass: the
+user ran real HLD/LLD sessions through the UI starting 2026-09-12 (that's
+what drove Phase 9's post-launch feature pass below), so the core session
+flow, history view, and diagram attach are confirmed working in practice.
+Phase 8 as a distinct "end-to-end pass" phase was never formally run or
+closed out — treat it as folded into the Phase 9/10/11 real-usage-driven
+passes rather than a separate remaining task. Current phase is Phase 11
+(below) plus Flagged item 1 just resolved (rubric anchors authored,
+`hld_v2`/`lld_deepdive_v2`). Next session: re-grade or at least spot-check
+a real transcript against the new v2 anchors to sanity-check the
+calibration before trusting weak-point data accumulated under it.
+
+**Phase 9 — Post-launch feature pass (2026-09-12):** after running the
+first real HLD round, review of its transcript drove four additions on top
+of Phase 7:
+1. **Report duplication principle reversed.** Phase 6/7 deliberately kept
+   `get_session_summary` from returning the full report ("the UI doesn't
+   duplicate Obsidian") — the user explicitly asked to see the graded
+   assessment (verdict, per-dimension scores, evidence) in the web UI. Added
+   `report_generator.generate_report` now also writes a JSON sidecar
+   (`data/reports/{session_id}.json`, the raw `GraderOutput`) alongside the
+   Markdown; `session_engine.get_session_report` + `GET
+   /sessions/{id}/report` + a new `ReportView` component serve it.
+   `get_session_summary`'s docstring updated accordingly — full detail now
+   lives behind the report endpoint, not withheld entirely.
+2. **Weak-points UI added.** `weakpoint_store` already accumulated
+   per-dimension counters with nothing surfacing them. Added
+   `session_engine.get_weakpoints` (adds a derived `success_rate`) + `GET
+   /weakpoints/{round_type}` + a new `WeakPointsView` component. Purely
+   additive read path, no invariant/architecture change.
+3. **LLD rubric dimension list authored** — see Flagged item 2's resolution
+   above.
+4. **Solver-agent concept introduced.** A fourth agent role, `solver`
+   (`backend/solver_agent.py`, `backend/prompts/solver_{hld,lld_deepdive}_v1.md`,
+   `config.models.solver`, `config.solver_prompt_version`), plays a strong
+   SDE3/Senior candidate answering the same live interviewer for the same
+   question a completed session was asked — batch/offline, no live
+   streaming, one blocking HTTP call
+   (`session_engine.run_solver_comparison`, `POST
+   /sessions/{id}/solver-comparison`). Its session is linked back via a new
+   `source_session_id` field on `SessionStartEvent` and a new `"solver"`
+   value on `CandidateTurnEvent.input_mode`, capped at `MAX_SOLVER_TURNS =
+   25` turns. It is graded identically to a real session but explicitly
+   excluded from weak-point tracking (`end_session` checks
+   `source_session_id` before calling `weakpoint_store.record_outcome`) —
+   that tracker measures the human's own performance only. `HistoryView`
+   surfaces it as a badge/link on the source session's row (not its own
+   top-level row); `ReportView` shows both reports as two tabs when either
+   is opened for a session with a linked pair.
+
+**Phase 10 — Obsidian dropped, scrollback added (2026-09-12):**
+1. **Obsidian vault write removed.** User confirmed no Dataview/cross-linking
+   use of the vault, so the only things it gave beyond what the web UI
+   already covers didn't apply. `report_generator.generate_report` no longer
+   writes Markdown or touches `OBSIDIAN_VAULT_PATH` at all — the JSON record
+   at `data/reports/{session_id}.json` is now the sole persisted report.
+   Since the Markdown frontmatter used to carry fields `GraderOutput` never
+   had (pauses, durations, diagram filenames, the full reproducibility
+   tuple), a new `report_generator.SessionReportRecord` model absorbs all of
+   it so none of that metadata was silently lost in the move.
+   `OBSIDIAN_VAULT_PATH` removed from `config._REQUIRED_ENV_VARS` and
+   `.env.example`; `report_generator.read_report_frontmatter` deleted;
+   `session_engine.get_session_summary` now reads `read_report_json`
+   instead. `interview-prep-agent-design.md`/`requirements.md`'s
+   Obsidian-centric sections (the architecture diagram box, "Markdown report
+   (Obsidian vault)", "queryable via Obsidian Dataview") are superseded by
+   this entry and intentionally left unedited as the original historical
+   spec, same treatment as Phase 9's report-duplication reversal.
+2. **`SessionView` gained a chat scrollback.** Previously each saved answer
+   cleared the textarea with no way to see prior answers mid-session. Now
+   fetches the session's transcript on mount (`GET /sessions/{id}/transcript`,
+   already built for `ReportView`'s reference-answer tab) and appends turns
+   optimistically as they're saved, auto-scrolling to the latest.
+3. **`ReportView` gained a "My conversation" tab.** Same gap the solver side
+   had before "Reference answer" existed - your own critique tab showed
+   evidence citations but never the actual conversation. Available on every
+   ended session (not gated behind a solver link, since the transcript
+   endpoint works for any session_id), alongside the existing solver-side
+   tabs when a linked solver run exists.
+
+**Phase 11 — Study-guide agent (undated, backfilled into this plan
+2026-09-13):** a fifth agent role, `study_guide`
+(`backend/study_guide_agent.py`,
+`backend/prompts/study_guide_{hld,lld_deepdive}_v1.md`,
+`config.models.study_guide`, `config.study_guide_prompt_version`), was
+built and wired but never logged here — this entry backfills it so the
+plan stays the source of truth. Generates a one-time cached HTML study
+guide grounded in a session's transcript (`session_engine.generate_study_guide`,
+`POST /sessions/{id}/study-guide`, cached to
+`data/study_guides/{session_id}.html`, `GET`/`exists` endpoints for
+read-back); intended to be called on a solver-comparison session so the
+teaching material is grounded in a strong reference answer, and if the
+session has a `source_session_id`, that source session's failed rubric
+dimensions (from its report's `weak_point_outcomes`) are passed in to
+weight the guide toward those topics. `ReportView` surfaces it as a
+"Study guide" tab (iframe) with a generate button when none exists yet.
+No tests exist for `study_guide_agent.py` (`test_solver_agent.py` exists
+for the solver role; there is no equivalent `test_study_guide_agent.py`) —
+flagged here as a gap, not fixed in this pass.
 
 **Model choice note (2026-09-10):** `config.py`'s model IDs were changed
 from `anthropic/claude-sonnet-4.6` to `z-ai/glm-5.3-flash` for all three
@@ -63,27 +157,30 @@ These are gaps the design doc leaves open that this plan deliberately does
 NOT resolve — each blocks part of a phase below from being "real" (as
 opposed to stubbed) until decided.
 
-1. **Rubric anchor/scoring content.** Neither doc specifies what earns a 1
-   vs. a 4 on any dimension. This is evaluative content, not architecture —
-   needs a dedicated authoring pass, not an invented placeholder. Blocks:
-   Phase 2's rubric YAML files (stub with TODO anchors), and blocks the
-   grader from being meaningfully calibrated in Phase 4. **Decision
-   2026-09-10: user will author this in a follow-up session.** Phase 4's
-   grader code/prompts/schema are built and wired against the stubbed
-   `hld_v1.yaml` as-is (TODO anchor text passes through verbatim) — they
-   are structurally complete but not meaningfully calibrated until this
-   authoring pass happens. Do not treat a grader run against TODO anchors
-   as a real evaluation.
-2. **LLD/Deep-dive rubric dimension list.** HLD has an implied 6-dimension
-   list (via the report frontmatter example in the design doc); LLD/Deep-dive
-   has zero worked example anywhere, despite being a combined round type
-   (low-level/OO design + resume-driven project deep-dive). Do not invent
-   this by analogy to HLD. Blocks: Phase 2's `lld_deepdive_v1.yaml`.
-   **Decision 2026-09-10: user will author this in a follow-up session.**
-   Until then, `lld_deepdive_v1.yaml` stays empty and grader/report code
-   paths for `round_type=lld_deepdive` are exercised by tests using a
-   synthetic fixture rubric, not the real (still-empty) one — LLD/Deep-dive
-   grading is not usable end-to-end yet.
+1. ~~**Rubric anchor/scoring content.**~~ **Resolved 2026-09-13:** authored
+   full 1-4 anchor text for all 6 dimensions in both rubrics, calibrated to
+   a senior/staff bar (3 = hire at that level on this dimension, 4 = depth
+   that stands out even among senior candidates, 1-2 = fell short of the
+   bar on this dimension specifically, not "said nothing"). Files renamed
+   `hld_v1.yaml` → `hld_v2.yaml` and `lld_deepdive_v1.yaml` →
+   `lld_deepdive_v2.yaml` (`version:` field and `config.rubric_version`
+   bumped to match) — the anchor text IS the grading criteria, so per the
+   reproducibility tuple's own purpose, sessions graded under v1's TODO
+   placeholders are not comparable to sessions graded under v2's real
+   anchors and must stay distinguishable. All of Phase 9/10's real
+   sessions were graded under v1 (recorded as such in their
+   `data/reports/*.json`, left untouched as historical record) — treat
+   those scores as provisional/uncalibrated, not a baseline to compare
+   future v2-graded sessions against.
+2. ~~**LLD/Deep-dive rubric dimension list.**~~ **Resolved 2026-09-12:**
+   authored as part of the post-launch feature pass below — 6 dimensions
+   tailored to both halves of the round (`requirements_clarification`,
+   `class_and_interface_design`, `concurrency_and_edge_cases`,
+   `extensibility_tradeoffs`, `deep_dive_depth`, `communication_of_tradeoffs`),
+   not invented by analogy to HLD's names. `lld_deepdive_v1.yaml` now has a
+   real dimension list and grading/report/weak-point code paths are usable
+   end-to-end for this round type. Anchor *content* (Flagged item 1) is
+   still open for both rubrics.
 3. ~~**Weak-point tag taxonomy vs. rubric dimensions.**~~ **Resolved
    2026-09-10:** weak-point tags ARE the rubric dimension names, exactly —
    no separate finer-grained vocabulary. `concurrency_deep_dive` in the

@@ -29,13 +29,14 @@ class SessionStartEvent(_BaseEvent):
     round_type: Literal["hld", "lld_deepdive"]
     question: str
     question_provenance: QuestionProvenance
+    source_session_id: str | None = None
 
 
 class CandidateTurnEvent(_BaseEvent):
     event: Literal["candidate_turn"] = "candidate_turn"
     checkpoint_id: str
     text: str
-    input_mode: Literal["typed", "voice"]
+    input_mode: Literal["typed", "voice", "solver"]
 
 
 class InterviewerTurnEvent(_BaseEvent):

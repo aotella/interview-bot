@@ -10,7 +10,7 @@ function averageScore(scores) {
 
 function ScoreTrend({ sessions }) {
   const graded = sessions
-    .filter((s) => s.status === "ended" && s.scores)
+    .filter((s) => s.status === "ended" && s.scores && !s.source_session_id)
     .slice()
     .reverse(); // oldest first for a left-to-right trend
   if (graded.length < 2) return null;
@@ -36,16 +36,20 @@ function ScoreTrend({ sessions }) {
   );
 }
 
-export default function HistoryView({ onBack, onResume }) {
+export default function HistoryView({ onBack, onResume, onOpenReport }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [resumingId, setResumingId] = useState(null);
+  const [solverRunningId, setSolverRunningId] = useState(null);
+  const [solverErrorId, setSolverErrorId] = useState(null);
+
+  function refresh() {
+    return api.listSessions().then(setSessions);
+  }
 
   useEffect(() => {
-    api
-      .listSessions()
-      .then(setSessions)
+    refresh()
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
@@ -64,6 +68,19 @@ export default function HistoryView({ onBack, onResume }) {
     }
   }
 
+  async function handleRunSolver(s) {
+    setSolverRunningId(s.session_id);
+    setSolverErrorId(null);
+    try {
+      await api.runSolverComparison(s.session_id);
+      await refresh();
+    } catch (e) {
+      setSolverErrorId({ id: s.session_id, message: e.message });
+    } finally {
+      setSolverRunningId(null);
+    }
+  }
+
   return (
     <div className="history-view">
       <button onClick={onBack} className="back-button">
@@ -78,24 +95,58 @@ export default function HistoryView({ onBack, onResume }) {
         <>
           <ScoreTrend sessions={sessions} />
           <ul className="session-list">
-            {sessions.map((s) => (
-              <li key={s.session_id} className="session-list-item">
-                <span className="session-date">{s.session_id.replace(/^s_/, "").replace(/-\d\d$/, "")}</span>
-                <span className="session-round">{s.round_type}</span>
-                <span className="session-status">
-                  {s.status === "ended" ? s.verdict || "graded pending" : "in progress"}
-                </span>
-                {s.status === "in_progress" && (
-                  <button
-                    className="resume-button"
-                    onClick={() => handleResume(s)}
-                    disabled={resumingId === s.session_id}
-                  >
-                    {resumingId === s.session_id ? "Resuming..." : s.paused ? "Resume" : "Continue"}
-                  </button>
-                )}
-              </li>
-            ))}
+            {sessions
+              .filter((s) => !s.source_session_id)
+              .map((s) => (
+                <li key={s.session_id} className="session-list-item">
+                  <span className="session-date">{s.session_id.replace(/^s_/, "").replace(/-\d\d$/, "")}</span>
+                  <span className="session-round">{s.round_type}</span>
+                  <span className="session-status">
+                    {s.status === "ended" ? s.verdict || "graded pending" : "in progress"}
+                  </span>
+                  {s.status === "ended" && (
+                    <button
+                      className="report-button"
+                      onClick={() => onOpenReport({ sessionId: s.session_id, solverSessionId: s.solver_session_id })}
+                    >
+                      View report
+                    </button>
+                  )}
+                  {s.status === "in_progress" && (
+                    <button
+                      className="resume-button"
+                      onClick={() => handleResume(s)}
+                      disabled={resumingId === s.session_id}
+                    >
+                      {resumingId === s.session_id ? "Resuming..." : s.paused ? "Resume" : "Continue"}
+                    </button>
+                  )}
+                  {s.status === "ended" && !s.solver_session_id && (
+                    <button
+                      className="solver-run-button"
+                      onClick={() => handleRunSolver(s)}
+                      disabled={solverRunningId === s.session_id}
+                    >
+                      {solverRunningId === s.session_id ? "Running senior reference..." : "Generate senior reference answer"}
+                    </button>
+                  )}
+                  {s.solver_session_id && (
+                    <span className="solver-badge">
+                      Senior SDE reference available{" "}
+                      <button
+                        onClick={() =>
+                          onOpenReport({ sessionId: s.solver_session_id, sourceSessionId: s.session_id })
+                        }
+                      >
+                        View
+                      </button>
+                    </span>
+                  )}
+                  {solverErrorId?.id === s.session_id && (
+                    <p className="error solver-error">{solverErrorId.message}</p>
+                  )}
+                </li>
+              ))}
             {sessions.length === 0 && <li className="muted">No sessions yet.</li>}
           </ul>
         </>

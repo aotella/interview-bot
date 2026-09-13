@@ -15,8 +15,17 @@ def test_hld_dimension_set():
     assert rubric.round_type == "hld"
 
 
-def test_lld_deepdive_is_a_distinct_stub():
+def test_lld_deepdive_dimension_set():
     rubric = load_rubric("lld_deepdive")
+    assert set(rubric.dimension_names()) == {
+        "requirements_clarification",
+        "class_and_interface_design",
+        "concurrency_and_edge_cases",
+        "extensibility_tradeoffs",
+        "deep_dive_depth",
+        "communication_of_tradeoffs",
+    }
     assert rubric.version == "lld_deepdive_v1"
-    # Stubbed pending Flagged item 2 - must not silently inherit HLD's dimensions.
+    assert rubric.round_type == "lld_deepdive"
+    # Tailored to its own two-halves framing, not inherited from HLD by analogy.
     assert set(rubric.dimension_names()) != set(load_rubric("hld").dimension_names())

@@ -14,7 +14,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 _REQUIRED_ENV_VARS = (
-    "OBSIDIAN_VAULT_PATH",
     "EXCALIDRAW_EXPORT_PATH",
     "OPENROUTER_API_KEY",
 )
@@ -31,7 +30,6 @@ def _require_env(name: str) -> str:
     return value
 
 
-OBSIDIAN_VAULT_PATH = _require_env("OBSIDIAN_VAULT_PATH")
 EXCALIDRAW_EXPORT_PATH = _require_env("EXCALIDRAW_EXPORT_PATH")
 OPENROUTER_API_KEY = _require_env("OPENROUTER_API_KEY")
 
@@ -50,6 +48,8 @@ class Models:
     interviewer: str
     grader: str
     question_sourcing: str
+    solver: str
+    study_guide: str
 
 
 @dataclass(frozen=True)
@@ -62,6 +62,8 @@ models = Models(
     interviewer="z-ai/glm-5.3-flash",
     grader="z-ai/glm-5.3-flash",
     question_sourcing="z-ai/glm-5.3-flash",
+    solver="z-ai/glm-5.3-flash",
+    study_guide="z-ai/glm-5.3-flash",
 )
 
 # Reproducibility tuple: bumped by hand when the corresponding
@@ -74,3 +76,5 @@ rubric_version = RubricVersions(
 interviewer_prompt_version = "v1"
 grader_prompt_version = "v1"
 question_sourcing_prompt_version = "v1"
+solver_prompt_version = "v1"
+study_guide_prompt_version = "v1"

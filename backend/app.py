@@ -7,6 +7,7 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from backend import session_engine
@@ -94,6 +95,53 @@ def get_session(session_id: str) -> dict:
         return session_engine.get_session_summary(session_id)
     except SessionEngineError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get("/sessions/{session_id}/report")
+def get_report(session_id: str) -> dict:
+    try:
+        return session_engine.get_session_report(session_id)
+    except SessionEngineError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get("/sessions/{session_id}/transcript")
+def get_transcript(session_id: str) -> dict:
+    try:
+        return session_engine.get_session_transcript(session_id)
+    except SessionEngineError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get("/sessions/{session_id}/study-guide/exists")
+def study_guide_exists(session_id: str) -> dict:
+    return {"exists": session_engine.study_guide_exists(session_id)}
+
+
+@app.get("/sessions/{session_id}/study-guide", response_class=HTMLResponse)
+def get_study_guide(session_id: str) -> str:
+    html = session_engine.get_study_guide(session_id)
+    if html is None:
+        raise HTTPException(status_code=404, detail=f"No study guide found for session {session_id!r}")
+    return html
+
+
+@app.post("/sessions/{session_id}/study-guide")
+def create_study_guide(session_id: str) -> dict:
+    try:
+        return session_engine.generate_study_guide(session_id)
+    except SessionEngineError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.post("/sessions/{session_id}/solver-comparison")
+def solver_comparison(session_id: str) -> dict:
+    return session_engine.run_solver_comparison(session_id)
+
+
+@app.get("/weakpoints/{round_type}")
+def get_weakpoints(round_type: str) -> dict:
+    return session_engine.get_weakpoints(round_type)
 
 
 if __name__ == "__main__":

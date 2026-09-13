@@ -1,21 +1,76 @@
 # LLD/Deep-dive rubric v1.
 #
-# TODO: BLOCKED on Flagged item 2 in PLAN.md.
-#
-# Neither interview-prep-agent-requirements.md nor
-# interview-prep-agent-design.md gives a worked dimension list for this
-# round type (HLD has one, via the design doc's frontmatter example; LLD/
-# Deep-dive - a combined round covering low-level/OO design AND
-# resume-driven project deep-dive - has none). Do not invent this list by
-# analogy to HLD's 6 dimensions; it needs its own authoring pass that
-# accounts for both halves of the round (OO/class design *and* deep-dive
-# probing of a real project).
-#
-# `dimensions` is deliberately left empty until that pass happens. Any code
-# that depends on this rubric having real dimensions (report generation,
-# grading) is not usable for this round type yet - that's expected at this
-# phase.
+# Dimension list resolved 2026-09-12 (Flagged item 2 in PLAN.md) - tailored
+# to both halves of this combined round (LLD/OO design AND resume-driven
+# project deep-dive), per interviewer_lld_deepdive_v1.md's own framing, not
+# invented by analogy to HLD's 6 dimensions. Anchor text (what earns a 1 vs.
+# a 4 on each dimension) is evaluative content that still needs a dedicated
+# authoring pass - see Flagged item 1 in PLAN.md, which covers both rubrics.
+# Do not treat these TODO anchors as real grading criteria until that pass
+# happens.
 round_type: lld_deepdive
 version: lld_deepdive_v1
 score_range: [1, 4]
-dimensions: []
+dimensions:
+  - name: requirements_clarification
+    description: >-
+      Scopes the LLD problem (which actors/classes are in scope, what
+      functionality is required) before designing, or frames what part of
+      their own project they intend to describe before diving in.
+    anchors:
+      1: TODO
+      2: TODO
+      3: TODO
+      4: TODO
+  - name: class_and_interface_design
+    description: >-
+      Object modeling quality: cohesive classes, clear interfaces/contracts,
+      appropriate encapsulation and abstraction boundaries for the given
+      problem.
+    anchors:
+      1: TODO
+      2: TODO
+      3: TODO
+      4: TODO
+  - name: concurrency_and_edge_cases
+    description: >-
+      Identifies and correctly reasons about concurrency (thread-safety,
+      race conditions) and edge cases in the OO design, or in the
+      deep-dive project's actual failure scenarios.
+    anchors:
+      1: TODO
+      2: TODO
+      3: TODO
+      4: TODO
+  - name: extensibility_tradeoffs
+    description: >-
+      Explicitly reasons about extensibility vs. simplicity - when to
+      generalize an interface/abstraction and when that would be
+      over-engineering, stated as a deliberate trade-off rather than either
+      extreme by default.
+    anchors:
+      1: TODO
+      2: TODO
+      3: TODO
+      4: TODO
+  - name: deep_dive_depth
+    description: >-
+      For the resume-driven project half: demonstrates real ownership and
+      depth under follow-up questioning (specific numbers, decisions,
+      failure modes actually encountered) rather than a rehearsed, generic
+      summary.
+    anchors:
+      1: TODO
+      2: TODO
+      3: TODO
+      4: TODO
+  - name: communication_of_tradeoffs
+    description: >-
+      States design trade-offs and their reasoning explicitly and clearly
+      across both halves of the round, rather than leaving them implicit or
+      only surfacing them when pushed.
+    anchors:
+      1: TODO
+      2: TODO
+      3: TODO
+      4: TODO
