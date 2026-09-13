@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
+import { roundLabel } from "../format";
 
 function formatElapsed(totalSeconds) {
   const m = Math.floor(totalSeconds / 60);
@@ -109,12 +110,25 @@ export default function SessionView({ session, onEnded }) {
 
   return (
     <div className="session-view">
-      <div className="elapsed-time">{formatElapsed(elapsedSeconds)}</div>
+      <div className="session-header">
+        <span className="session-round-label">{roundLabel(session.round_type)}</span>
+        <span className="elapsed-time">{formatElapsed(elapsedSeconds)}</span>
+      </div>
 
-      <div className="question-panel">{session.question}</div>
+      <div>
+        <span className="panel-label">Question</span>
+        <div className="question-panel">{session.question}</div>
+      </div>
 
-      <div className="chat-scroll" ref={scrollRef}>
-        {loadingHistory && <p className="muted">Loading...</p>}
+      <div>
+        <span className="panel-label">Conversation</span>
+        <div className="chat-scroll" ref={scrollRef}>
+        {loadingHistory && (
+          <div className="skeleton-block">
+            <div className="skeleton-line" style={{ width: "70%" }} />
+            <div className="skeleton-line" style={{ width: "45%" }} />
+          </div>
+        )}
         {!loadingHistory && turns.length === 0 && (
           <p className="muted">Your answers and the interviewer's follow-ups will appear here.</p>
         )}
@@ -131,6 +145,7 @@ export default function SessionView({ session, onEnded }) {
             {t.text}
           </div>
         ))}
+        </div>
       </div>
 
       <textarea

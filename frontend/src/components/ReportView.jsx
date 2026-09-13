@@ -1,29 +1,39 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import { humanizeDimension, scoreTier, verdictClass } from "../format";
 
 function ReportBody({ report }) {
   return (
     <>
-      <p className={report.verdict === "REJECT" ? "error" : ""}>
-        <strong>Verdict: {report.verdict}</strong>
+      <p>
+        Verdict: <span className={verdictClass(report.verdict)}>{report.verdict}</span>
       </p>
+      <span className="panel-label">Question</span>
       <p className="question-panel">{report.question}</p>
 
-      {report.dimensions.map((d) => (
-        <div className="dimension-card" key={d.dimension}>
-          <h3>
-            {d.dimension} &mdash;{" "}
-            {d.score === null ? "Not tested this session" : `${d.score}/${report.score_range[1]}`}
-          </h3>
-          <ul>
-            {d.evidence.map((ev, i) => (
-              <li key={i}>
-                (<code>{ev.event_id}</code>) {ev.reason}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+      <div className="dimension-grid">
+        {report.dimensions.map((d) => {
+          const tier = scoreTier(d.score, report.score_range);
+          return (
+            <div className={`dimension-card${tier ? ` dimension-card--${tier}` : ""}`} key={d.dimension}>
+              <div className="dimension-card-heading">
+                <h3>{humanizeDimension(d.dimension)}</h3>
+                <span className={`score-badge${tier ? ` score-badge--${tier}` : ""}`}>
+                  {d.score === null ? "Not tested" : `${d.score} / ${report.score_range[1]}`}
+                </span>
+              </div>
+              <ul>
+                {d.evidence.map((ev, i) => (
+                  <li key={i}>
+                    {ev.reason}
+                    <span className="evidence-id">{ev.event_id}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
     </>
   );
 }
@@ -31,6 +41,7 @@ function ReportBody({ report }) {
 function TranscriptBody({ transcript }) {
   return (
     <>
+      <span className="panel-label">Question</span>
       <p className="question-panel">{transcript.question}</p>
       <div className="transcript-turns">
         {transcript.turns.map((t, i) => (
@@ -140,7 +151,7 @@ export default function ReportView({ sessionId, solverSessionId, sourceSessionId
       </button>
       <h2>Report</h2>
 
-      <div className="report-tabs">
+      <div className="tab-bar">
         <button aria-pressed={tab === "mine"} onClick={() => setTab("mine")}>
           My answer
         </button>
@@ -166,8 +177,21 @@ export default function ReportView({ sessionId, solverSessionId, sourceSessionId
         <StudyGuideBody solverId={solverId} />
       ) : (
         <>
-          {loading && <p className="muted">Loading...</p>}
-          {error && <p className="error">{error}</p>}
+          {loading && (
+            <div className="skeleton-block">
+              <div className="skeleton-line" style={{ width: "60%" }} />
+              <div className="skeleton-line" style={{ width: "100%", height: "5rem" }} />
+              <div className="skeleton-line" style={{ width: "100%", height: "4rem" }} />
+            </div>
+          )}
+          {error && (
+            <div className="state-block state-block--error">
+              <span className="state-block-icon">⚠️</span>
+              <p className="error" style={{ margin: 0 }}>
+                Couldn't load this report: {error}
+              </p>
+            </div>
+          )}
           {!loading && !error && TAB_KIND[tab] === "report" && report && <ReportBody report={report} />}
           {!loading && !error && TAB_KIND[tab] === "transcript" && transcript && (
             <TranscriptBody transcript={transcript} />

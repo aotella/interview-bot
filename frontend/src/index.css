@@ -3,58 +3,104 @@
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-display: "Fraunces", Georgia, "Times New Roman", serif;
 
-  --bg: #f5f1ea;
-  --bg-elevated: #fffdfa;
-  --card-bg: #fbf8f3;
-  --fg: #262119;
-  --muted: #8a8175;
-  --border: #e6dfd0;
+  /* Cool slate neutrals + a confident indigo accent - the register of a
+     technical assessment tool (evidence, rubrics, scored reports) rather
+     than an editorial/lifestyle site. */
+  --bg: #eef0f4;
+  --bg-elevated: #ffffff;
+  --card-bg: #ffffff;
+  --fg: #1a1d24;
+  --muted: #676d7c;
+  --border: #d7dbe3;
 
-  --accent: #bf5b3a;
-  --accent-hover: #a84e30;
-  --accent-fg: #fffaf5;
+  --accent: #3454d1;
+  --accent-hover: #2a44ab;
+  --accent-fg: #ffffff;
 
-  --follow-up-bg: #fbf0d9;
-  --follow-up-border: #dfa94b;
-  --follow-up-fg: #6b4a16;
+  /* Follow-up (informational, interviewer probing further) reads cool/blue;
+     interject (an interruption) stays warm/amber so the two read as
+     different registers of interviewer intervention, not the same thing
+     twice. */
+  --follow-up-bg: #e8edfc;
+  --follow-up-border: #7c93f5;
+  --follow-up-fg: #2a3a8f;
 
-  --interject-bg: #fbe4dd;
-  --interject-border: #d97757;
-  --interject-fg: #7a3420;
+  --interject-bg: #fdeee2;
+  --interject-border: #e08a3c;
+  --interject-fg: #8a4a13;
 
-  --error: #b3392a;
+  /* Semantic colors, each contrast-checked (WCAG AA, 4.5:1) against its own
+     -bg for the badge/pill use case, and deliberately pulled away from
+     --accent's hue so a verdict or score tier reads as its own signal
+     rather than a tint of the brand color. */
+  --error: #c02b3c;
+  --error-bg: #fbe4e7;
+  --success: #176b3c;
+  --success-bg: #e3f5ea;
+  --warn: #8a6015;
+  --warn-bg: #fbeed7;
 
-  --shadow-sm: 0 1px 2px rgba(38, 33, 25, 0.06);
-  --shadow-md: 0 4px 16px rgba(38, 33, 25, 0.08);
-  --shadow-lg: 0 12px 32px rgba(38, 33, 25, 0.12);
+  --shadow-sm: 0 1px 2px rgba(15, 17, 23, 0.07);
+  --shadow-md: 0 4px 16px rgba(15, 17, 23, 0.09);
+  --shadow-lg: 0 12px 32px rgba(15, 17, 23, 0.14);
+
+  /* Spacing scale - vertical rhythm and gaps should come from here rather
+     than each rule picking its own rem value. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* Type scale - a handful of steps instead of a different near-identical
+     size per component. */
+  --text-3xs: 0.7rem;
+  --text-2xs: 0.75rem;
+  --text-xs: 0.8rem;
+  --text-sm: 0.875rem;
+  --text-base: 0.95rem;
+  --text-md: 1.15rem;
+  --text-lg: 1.3rem;
+  --text-h1: 1.6rem;
+  --text-h2: 1rem;
+
+  --content-width: 760px;
+  --content-width-wide: 960px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #1e1b17;
-    --bg-elevated: #262220;
-    --card-bg: #2a2622;
-    --fg: #ede7dd;
-    --muted: #a79e90;
-    --border: #3a342c;
+    --bg: #14161c;
+    --bg-elevated: #1b1e26;
+    --card-bg: #1f232c;
+    --fg: #e8eaf0;
+    --muted: #8b90a0;
+    --border: #2c303c;
 
-    --accent: #e0805c;
-    --accent-hover: #ec9678;
-    --accent-fg: #241a14;
+    --accent: #5b7cfa;
+    --accent-hover: #7c93f5;
+    --accent-fg: #0d1120;
 
-    --follow-up-bg: #362c14;
-    --follow-up-border: #c79a45;
-    --follow-up-fg: #f0d9a0;
+    --follow-up-bg: #1c2440;
+    --follow-up-border: #5b7cfa;
+    --follow-up-fg: #c7d2fb;
 
-    --interject-bg: #3a2620;
-    --interject-border: #d97757;
-    --interject-fg: #f3c4af;
+    --interject-bg: #3a2a18;
+    --interject-border: #e08a3c;
+    --interject-fg: #f5c793;
 
-    --error: #e8836f;
+    --error: #e8708a;
+    --error-bg: #3a2028;
+    --success: #82b785;
+    --success-bg: #1c2c22;
+    --warn: #d9b458;
+    --warn-bg: #362c14;
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
-    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -79,6 +125,25 @@ h3 {
   margin: 0;
 }
 
+h2 {
+  font-size: var(--text-h1);
+}
+
+h3 {
+  font-size: var(--text-h2);
+}
+
+.panel-label {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: var(--space-2);
+}
+
 /* Full-bleed top bar, inner content aligned to the same column as .app */
 .topbar {
   border-bottom: 1px solid var(--border);
@@ -89,19 +154,21 @@ h3 {
 }
 
 .topbar-inner {
-  max-width: 760px;
+  max-width: var(--content-width);
   margin: 0 auto;
   padding: 0.85rem 1.25rem;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-2) var(--space-4);
 }
 
 .wordmark {
   font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 500;
+  white-space: nowrap;
   border: none;
   background: none;
   padding: 0;
@@ -117,20 +184,45 @@ h3 {
 
 .topbar-nav {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .topbar-nav button {
   padding: 0.4rem 0.85rem;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.topbar-nav button:not(:disabled):hover {
+  border-color: transparent;
+  background: var(--card-bg);
+  color: var(--fg);
+  box-shadow: none;
+}
+
+.topbar-nav button[aria-pressed="true"],
+.topbar-nav button.is-active {
+  color: var(--accent);
+  background: var(--card-bg);
 }
 
 .app {
-  max-width: 760px;
+  max-width: var(--content-width);
   margin: 0 auto;
-  padding: 2rem 1.25rem 4rem;
+  padding: var(--space-6) 1.25rem var(--space-7);
   position: relative;
   min-height: calc(100vh - 53px);
+  transition: max-width 0.15s ease;
+}
+
+/* Report and Weak Points are fundamentally a grid of independent facts,
+   not prose - a wider column cuts the scroll length instead of forcing
+   everything through the reading-width column meant for the question
+   text and live session. */
+.app--wide {
+  max-width: var(--content-width-wide);
 }
 
 @keyframes fadeIn {
@@ -146,7 +238,7 @@ h3 {
 
 button {
   font-family: var(--font-sans);
-  font-size: 0.95rem;
+  font-size: var(--text-base);
   font-weight: 500;
   padding: 0.6rem 1.15rem;
   border-radius: 10px;
@@ -171,6 +263,11 @@ button:not(:disabled):active {
   transform: translateY(1px);
 }
 
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 button[aria-pressed="true"] {
   border-color: var(--accent);
   color: var(--accent);
@@ -188,6 +285,45 @@ button[aria-pressed="true"] {
   box-shadow: var(--shadow-md);
 }
 
+/* Disabled primary buttons must read as inert, not just dimmed accent. */
+.btn-primary:disabled {
+  background: var(--border);
+  border-color: var(--border);
+  color: var(--muted);
+  opacity: 1;
+}
+
+/* Ghost buttons - for navigation and secondary actions that shouldn't
+   compete visually with real calls to action (Back, topbar nav). */
+.btn-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.btn-ghost:not(:disabled):hover {
+  border-color: transparent;
+  background: var(--card-bg);
+  color: var(--fg);
+  box-shadow: none;
+}
+
+.back-button {
+  padding: 0.4rem 0.7rem 0.4rem 0.4rem;
+  margin-bottom: var(--space-4);
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--text-base);
+}
+
+.back-button:not(:disabled):hover {
+  border-color: transparent;
+  background: var(--card-bg);
+  color: var(--fg);
+  box-shadow: none;
+}
+
 .muted {
   color: var(--muted);
 }
@@ -196,14 +332,117 @@ button[aria-pressed="true"] {
   color: var(--error);
 }
 
+/* Verdict badges - one consistent visual signal used everywhere a verdict
+   appears (history list, report), instead of plain text in one place and
+   colored text in another. */
+.verdict {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.verdict--select {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.verdict--reject {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+/* Segmented tab control - used for report tabs and round/dimension
+   toggles, so switching views/modes reads as a mode switch rather than a
+   row of identical buttons. */
+.tab-bar {
+  display: flex;
+  gap: var(--space-5);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.tab-bar button {
+  border: none;
+  border-radius: 0;
+  background: none;
+  padding: 0.15rem 0.05rem 0.7rem;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: var(--text-base);
+}
+
+.tab-bar button:not(:disabled):hover {
+  border-color: transparent;
+  border-bottom-color: var(--muted);
+  color: var(--fg);
+  box-shadow: none;
+}
+
+.tab-bar button[aria-pressed="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Loading skeletons - replace bare "Loading..." text so the page doesn't
+   jump when content arrives. */
+.skeleton-line {
+  height: 0.9em;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--border) 25%, var(--card-bg) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Shared error/empty state - icon + message + optional retry, instead of
+   a bare line of red or muted text. */
+.state-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-5) 1.4rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.state-block--error {
+  border-color: color-mix(in srgb, var(--error) 35%, var(--border));
+}
+
+.state-block-icon {
+  font-size: 1.3rem;
+}
+
 /* Round selector - warm, card-like invitations, not plain buttons */
 .round-selector {
-  margin-top: 1.5rem;
+  margin-top: var(--space-5);
   animation: fadeIn 0.4s ease;
 }
 
 .round-selector h2 {
-  font-size: 1.5rem;
   color: var(--fg);
 }
 
@@ -211,10 +450,65 @@ button[aria-pressed="true"] {
   margin: 0.35rem 0 0;
 }
 
+/* Continue-in-progress panel - the single most useful thing the home
+   screen can say to a returning user with unfinished work, surfaced here
+   instead of requiring a trip to History to notice it exists. */
+.continue-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 14px;
+  padding: 1.15rem 1.25rem;
+  margin-bottom: var(--space-5);
+}
+
+/* Serif italic marks "the interviewer's own words" throughout the app
+   (the question, follow-ups, interjections) so the voice reads as spoken
+   to you - candidate/system text around it stays upright sans. */
+.continue-question {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--text-md);
+  line-height: 1.5;
+  color: var(--fg);
+}
+
+.continue-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.continue-more {
+  margin-top: var(--space-2);
+  padding: 0.2rem 0;
+  font-size: var(--text-sm);
+}
+
+/* Progress snapshot - a one-line reminder of where you stand, so the home
+   screen isn't a blank menu that ignores everything the app has already
+   learned about you. */
+.progress-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-5);
+  margin-bottom: var(--space-6);
+  font-size: var(--text-base);
+}
+
+.progress-strip-link {
+  padding: 0.15rem 0;
+  font-size: var(--text-sm);
+  margin-left: auto;
+}
+
 .round-buttons {
   display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
   flex-wrap: wrap;
 }
 
@@ -234,13 +528,13 @@ button[aria-pressed="true"] {
 
 .round-card-title {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: var(--text-md);
   font-weight: 500;
   color: var(--fg);
 }
 
 .round-card-desc {
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
   line-height: 1.45;
   color: var(--muted);
 }
@@ -250,26 +544,69 @@ button[aria-pressed="true"] {
   transform: translateY(-2px);
 }
 
+/* Capabilities strip - makes the less-obvious parts of the app (grading
+   rubric, senior reference, study guide) visible on the home screen
+   instead of only being discoverable after finishing a round. */
+.capabilities-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin-top: var(--space-7);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+.capability {
+  flex: 1 1 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.capability-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.capability .muted {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
 /* Live session - one thing on screen at a time, no sidebar */
 .session-view {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-5);
   animation: fadeIn 0.3s ease;
 }
 
+.session-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.session-round-label {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .elapsed-time {
-  position: absolute;
-  top: 1.25rem;
-  right: 1.25rem;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .question-panel {
   font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-style: italic;
+  font-size: var(--text-lg);
   line-height: 1.55;
   padding: 1.5rem;
   background: var(--card-bg);
@@ -280,10 +617,10 @@ button[aria-pressed="true"] {
 .chat-scroll {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
   max-height: 50vh;
   overflow-y: auto;
-  padding: 1rem;
+  padding: var(--space-4);
   border: 1px solid var(--border);
   border-radius: 14px;
 }
@@ -309,12 +646,20 @@ button[aria-pressed="true"] {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
-/* Inline interjection/follow-up panel - never a modal */
+/* Inline interjection/follow-up panel - never a modal. Italic serif here
+   too: these are the interviewer speaking mid-conversation, same voice as
+   the question panel. */
 .inline-panel {
   padding: 1.1rem 1.25rem;
   border-radius: 14px;
   border: 1px solid;
   line-height: 1.55;
+}
+
+.inline-panel--follow_up,
+.inline-panel--interject {
+  font-family: var(--font-display);
+  font-style: italic;
 }
 
 .inline-panel--follow_up {
@@ -332,32 +677,43 @@ button[aria-pressed="true"] {
 .session-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.65rem;
+  gap: var(--space-3);
 }
 
 .end-button {
   margin-left: auto;
-  border-color: var(--border);
+  padding-left: 1.4rem;
+  border-color: transparent;
+  background: transparent;
   color: var(--muted);
+  position: relative;
+}
+
+.end-button::before {
+  content: "";
+  position: absolute;
+  left: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 1.4em;
+  background: var(--border);
 }
 
 .end-button:not(:disabled):hover {
   color: var(--error);
   border-color: var(--error);
+  background: var(--error-bg);
 }
 
 .complete-screen {
   text-align: center;
-  margin-top: 1.5rem;
+  margin-top: var(--space-5);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
   align-items: center;
   animation: fadeIn 0.35s ease;
-}
-
-.complete-screen h2 {
-  font-size: 1.7rem;
 }
 
 /* History view - plain list + a simple trend line, not a dashboard */
@@ -368,7 +724,7 @@ button[aria-pressed="true"] {
 .score-trend {
   color: var(--accent);
   display: block;
-  margin: 1.5rem 0;
+  margin: var(--space-5) 0;
 }
 
 .session-list {
@@ -376,22 +732,44 @@ button[aria-pressed="true"] {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 
 .session-list-item {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--space-1) var(--space-4);
   padding: 0.85rem 1.1rem;
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 12px;
 }
 
+.session-list-item-main {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+}
+
 .session-round {
   color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.session-question {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-elapsed {
+  color: var(--muted);
+  font-size: var(--text-xs);
 }
 
 .session-status {
@@ -400,51 +778,102 @@ button[aria-pressed="true"] {
 }
 
 .solver-badge {
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   color: var(--accent);
-  margin-left: 0.5rem;
+  margin-left: var(--space-2);
 }
 
 .solver-run-button {
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   padding: 0.45rem 0.85rem;
 }
 
 .solver-error {
   flex-basis: 100%;
   margin: 0;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
 }
 
-/* Report view - single column, one card per dimension, no modal */
+/* Report view - a grid of independent, scored facts, given room to be one
+   on desktop instead of a single forced column of six near-identical
+   cards. */
 .report-view {
   animation: fadeIn 0.3s ease;
 }
 
 .report-view h2 {
-  font-size: 1.6rem;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
-.report-tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
+.dimension-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 700px) {
+  .dimension-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .dimension-card {
   background: var(--card-bg);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
   border-radius: 14px;
   padding: 1.15rem 1.25rem;
-  margin-bottom: 0.85rem;
 }
 
-.dimension-card h3 {
-  margin: 0 0 0.6rem;
+.dimension-card--strong {
+  border-left-color: var(--success);
+}
+
+.dimension-card--mid {
+  border-left-color: var(--warn);
+}
+
+.dimension-card--weak {
+  border-left-color: var(--error);
+}
+
+.dimension-card-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-2);
+}
+
+.dimension-card-heading h3 {
+  margin: 0;
   font-family: var(--font-sans);
-  font-size: 1rem;
   font-weight: 600;
+}
+
+.score-badge {
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--bg);
+}
+
+.score-badge--strong {
+  color: var(--success);
+  background: var(--success-bg);
+}
+
+.score-badge--mid {
+  color: var(--warn);
+  background: var(--warn-bg);
+}
+
+.score-badge--weak {
+  color: var(--error);
+  background: var(--error-bg);
 }
 
 .dimension-card ul {
@@ -453,19 +882,25 @@ button[aria-pressed="true"] {
   color: var(--fg);
 }
 
-.dimension-card code {
-  font-size: 0.85em;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 0.05em 0.35em;
+.dimension-card li {
+  margin-bottom: var(--space-1);
+}
+
+.evidence-id {
+  display: inline-block;
+  margin-left: var(--space-2);
+  font-size: var(--text-3xs);
+  font-family: ui-monospace, "SF Mono", monospace;
+  color: var(--muted);
+  opacity: 0.75;
+  white-space: nowrap;
 }
 
 /* Reference-answer transcript - a readable conversation, not raw JSON */
 .transcript-turns {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .transcript-turn {
@@ -477,7 +912,9 @@ button[aria-pressed="true"] {
 
 .transcript-turn-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
+  font-family: var(--font-sans);
+  font-style: normal;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
@@ -510,7 +947,7 @@ button[aria-pressed="true"] {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.85rem;
+  gap: var(--space-3);
 }
 
 /* Weak-points view - plain table, not a dashboard */
@@ -518,15 +955,11 @@ button[aria-pressed="true"] {
   animation: fadeIn 0.3s ease;
 }
 
-.weakpoints-view h2 {
-  font-size: 1.6rem;
-}
-
 .weakpoints-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  margin-top: 1.25rem;
+  margin-top: var(--space-5);
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -541,7 +974,7 @@ button[aria-pressed="true"] {
 }
 
 .weakpoints-table th {
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
@@ -550,4 +983,36 @@ button[aria-pressed="true"] {
 
 .weakpoints-table tr:last-child td {
   border-bottom: none;
+}
+
+.rate-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.rate-bar {
+  width: 60px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.rate-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.rate-bar-fill--strong {
+  background: var(--success);
+}
+
+.rate-bar-fill--mid {
+  background: var(--warn);
+}
+
+.rate-bar-fill--weak {
+  background: var(--error);
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import { formatDuration, truncate, verdictClass } from "../format";
 
 // A null score means "no transcript evidence for this dimension" (Flagged
 // item 7), not a failing grade - averaging must exclude nulls, and a
@@ -38,31 +39,39 @@ function ScoreTrend({ sessions }) {
     return { x, y };
   });
 
+  const latest = graded[graded.length - 1];
+
   return (
-    <svg className="score-trend" width={width} height={height}>
-      <polyline
-        points={coords.map(({ x, y }) => `${x},${y}`).join(" ")}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-      {coords.map(({ x, y }, i) => {
-        const { testedCount, totalCount } = graded[i];
-        const partial = testedCount < totalCount;
-        return (
-          <circle
-            key={i}
-            cx={x}
-            cy={y}
-            r={partial ? "2" : "3"}
-            fill="currentColor"
-            opacity={partial ? 0.6 : 1}
-          >
-            <title>{`avg over ${testedCount}/${totalCount} dimensions`}</title>
-          </circle>
-        );
-      })}
-    </svg>
+    <div>
+      <span className="panel-label">Score trend ({graded.length} graded sessions)</span>
+      <svg className="score-trend" viewBox={`0 0 ${width} ${height}`} width="100%" height={height} preserveAspectRatio="xMinYMid meet">
+        <polyline
+          points={coords.map(({ x, y }) => `${x},${y}`).join(" ")}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+        {coords.map(({ x, y }, i) => {
+          const { testedCount, totalCount } = graded[i];
+          const partial = testedCount < totalCount;
+          return (
+            <circle
+              key={i}
+              cx={x}
+              cy={y}
+              r={partial ? "2" : "3"}
+              fill="currentColor"
+              opacity={partial ? 0.6 : 1}
+            >
+              <title>{`avg over ${testedCount}/${totalCount} dimensions`}</title>
+            </circle>
+          );
+        })}
+      </svg>
+      <p className="muted" style={{ margin: "0.25rem 0 0", fontSize: "0.85rem" }}>
+        Latest average: {latest.avg.toFixed(1)} / 4
+      </p>
+    </div>
   );
 }
 
@@ -88,10 +97,7 @@ export default function HistoryView({ onBack, onResume, onOpenReport }) {
     setResumingId(s.session_id);
     setError(null);
     try {
-      if (s.paused) {
-        await api.resume(s.session_id);
-      }
-      onResume(s);
+      await onResume(s);
     } catch (e) {
       setError(e.message);
       setResumingId(null);
@@ -118,8 +124,24 @@ export default function HistoryView({ onBack, onResume, onOpenReport }) {
       </button>
       <h2>Session History</h2>
 
-      {loading && <p className="muted">Loading...</p>}
-      {error && <p className="error">{error}</p>}
+      {loading && (
+        <div className="skeleton-block" style={{ marginTop: "1.5rem" }}>
+          <div className="skeleton-line" style={{ width: "100%", height: "3.2rem" }} />
+          <div className="skeleton-line" style={{ width: "100%", height: "3.2rem" }} />
+          <div className="skeleton-line" style={{ width: "100%", height: "3.2rem" }} />
+        </div>
+      )}
+      {error && (
+        <div className="state-block state-block--error">
+          <span className="state-block-icon">⚠️</span>
+          <p className="error" style={{ margin: 0 }}>
+            Couldn't load session history: {error}
+          </p>
+          <button onClick={() => { setLoading(true); refresh().catch((e) => setError(e.message)).finally(() => setLoading(false)); }}>
+            Retry
+          </button>
+        </div>
+      )}
 
       {!loading && !error && (
         <>
@@ -129,10 +151,20 @@ export default function HistoryView({ onBack, onResume, onOpenReport }) {
               .filter((s) => !s.source_session_id)
               .map((s) => (
                 <li key={s.session_id} className="session-list-item">
-                  <span className="session-date">{s.session_id.replace(/^s_/, "").replace(/-\d\d$/, "")}</span>
-                  <span className="session-round">{s.round_type}</span>
+                  <div className="session-list-item-main">
+                    <span className="session-date">{s.session_id.replace(/^s_/, "").replace(/-\d\d$/, "")}</span>
+                    <span className="session-round">{s.round_type}</span>
+                    {s.status === "in_progress" && (
+                      <span className="session-elapsed">{formatDuration(s.elapsed_seconds)} elapsed</span>
+                    )}
+                  </div>
+                  {s.question && <span className="session-question">{truncate(s.question, 90)}</span>}
                   <span className="session-status">
-                    {s.status === "ended" ? s.verdict || "graded pending" : "in progress"}
+                    {s.status === "ended" ? (
+                      s.verdict ? <span className={verdictClass(s.verdict)}>{s.verdict}</span> : "graded pending"
+                    ) : (
+                      "in progress"
+                    )}
                   </span>
                   {s.status === "ended" && (
                     <button

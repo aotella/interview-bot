@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import RoundSelector from "./components/RoundSelector";
 import SessionView from "./components/SessionView";
 import HistoryView from "./components/HistoryView";
 import ReportView from "./components/ReportView";
 import WeakPointsView from "./components/WeakPointsView";
 import { api } from "./api";
+import { verdictClass } from "./format";
 
 export default function App() {
   const [view, setView] = useState("round-select"); // round-select | session | complete | history | report | weakpoints
@@ -17,6 +18,13 @@ export default function App() {
   const [solverRunning, setSolverRunning] = useState(false);
   const [solverResult, setSolverResult] = useState(null);
   const [solverError, setSolverError] = useState(null);
+
+  // Landing mid-scroll on a freshly switched view (e.g. opening a report
+  // from partway down a long history list) hides the thing you just asked
+  // for, so every view change starts at the top.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [view]);
 
   async function handleStart(roundType) {
     setStarting(true);
@@ -45,7 +53,10 @@ export default function App() {
     setView("round-select");
   }
 
-  function handleResume(sessionSummary) {
+  async function handleResume(sessionSummary) {
+    if (sessionSummary.paused) {
+      await api.resume(sessionSummary.session_id);
+    }
     setSession(sessionSummary);
     setView("session");
   }
@@ -78,10 +89,16 @@ export default function App() {
           </button>
           {view !== "session" && (
             <nav className="topbar-nav">
-              <button onClick={() => setView(view === "history" ? "round-select" : "history")}>
+              <button
+                className={view === "history" ? "is-active" : undefined}
+                onClick={() => setView(view === "history" ? "round-select" : "history")}
+              >
                 {view === "history" ? "Close history" : "History"}
               </button>
-              <button onClick={() => setView(view === "weakpoints" ? "round-select" : "weakpoints")}>
+              <button
+                className={view === "weakpoints" ? "is-active" : undefined}
+                onClick={() => setView(view === "weakpoints" ? "round-select" : "weakpoints")}
+              >
                 {view === "weakpoints" ? "Close weak points" : "Weak points"}
               </button>
             </nav>
@@ -89,9 +106,16 @@ export default function App() {
         </div>
       </header>
 
-      <div className="app">
+      <div className={`app${view === "report" || view === "weakpoints" ? " app--wide" : ""}`}>
         {view === "round-select" && (
-          <RoundSelector onStart={handleStart} loading={starting} error={startError} />
+          <RoundSelector
+            onStart={handleStart}
+            loading={starting}
+            error={startError}
+            onResumeSession={handleResume}
+            onOpenHistory={() => setView("history")}
+            onOpenWeakpoints={() => setView("weakpoints")}
+          />
         )}
 
         {view === "session" && session && <SessionView session={session} onEnded={handleEnded} />}
@@ -101,7 +125,9 @@ export default function App() {
             <h2>Session complete</h2>
             {completion?.graded ? (
               <>
-                <p>Verdict: {completion.verdict}</p>
+                <p>
+                  Verdict: <span className={verdictClass(completion.verdict)}>{completion.verdict}</span>
+                </p>
                 <button onClick={() => handleOpenReport({ sessionId: completion.session_id })}>
                   View report
                 </button>
@@ -115,7 +141,9 @@ export default function App() {
                 {solverError && <p className="error">{solverError}</p>}
                 {solverResult && (
                   <>
-                    <p className="muted">Reference verdict: {solverResult.verdict}</p>
+                    <p className="muted">
+                      Reference verdict: <span className={verdictClass(solverResult.verdict)}>{solverResult.verdict}</span>
+                    </p>
                     <button
                       onClick={() =>
                         handleOpenReport({
