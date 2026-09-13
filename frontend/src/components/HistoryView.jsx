@@ -1,36 +1,66 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 
+// A null score means "no transcript evidence for this dimension" (Flagged
+// item 7), not a failing grade - averaging must exclude nulls, and a
+// session where few dimensions were actually tested shouldn't be plotted
+// as if its average were as reliable as a fully-tested session's.
 function averageScore(scores) {
   if (!scores) return null;
   const values = Object.values(scores);
-  if (values.length === 0) return null;
-  return values.reduce((a, b) => a + b, 0) / values.length;
+  const totalCount = values.length;
+  const tested = values.filter((v) => v !== null && v !== undefined);
+  const testedCount = tested.length;
+  if (testedCount === 0) return { avg: null, testedCount, totalCount };
+  const avg = tested.reduce((a, b) => a + b, 0) / testedCount;
+  return { avg, testedCount, totalCount };
 }
 
 function ScoreTrend({ sessions }) {
   const graded = sessions
     .filter((s) => s.status === "ended" && s.scores && !s.source_session_id)
     .slice()
-    .reverse(); // oldest first for a left-to-right trend
+    .reverse() // oldest first for a left-to-right trend
+    .map((s) => ({ session: s, ...averageScore(s.scores) }))
+    // Same "half the dimensions" threshold HistoryView's backend counterpart
+    // (report_generator's null-count warning) uses - a session with fewer
+    // than half its dimensions actually tested isn't plotted at all rather
+    // than shown as an equally-weighted point.
+    .filter(({ avg, testedCount, totalCount }) => avg !== null && testedCount >= totalCount / 2);
   if (graded.length < 2) return null;
 
   const width = 400;
   const height = 80;
   const maxScore = 4;
-  const points = graded.map((s, i) => {
+  const coords = graded.map(({ avg }, i) => {
     const x = (i / (graded.length - 1)) * (width - 20) + 10;
-    const avg = averageScore(s.scores);
     const y = height - 10 - (avg / maxScore) * (height - 20);
-    return `${x},${y}`;
+    return { x, y };
   });
 
   return (
     <svg className="score-trend" width={width} height={height}>
-      <polyline points={points.join(" ")} fill="none" stroke="currentColor" strokeWidth="2" />
-      {points.map((p, i) => {
-        const [x, y] = p.split(",");
-        return <circle key={i} cx={x} cy={y} r="3" fill="currentColor" />;
+      <polyline
+        points={coords.map(({ x, y }) => `${x},${y}`).join(" ")}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      {coords.map(({ x, y }, i) => {
+        const { testedCount, totalCount } = graded[i];
+        const partial = testedCount < totalCount;
+        return (
+          <circle
+            key={i}
+            cx={x}
+            cy={y}
+            r={partial ? "2" : "3"}
+            fill="currentColor"
+            opacity={partial ? 0.6 : 1}
+          >
+            <title>{`avg over ${testedCount}/${totalCount} dimensions`}</title>
+          </circle>
+        );
       })}
     </svg>
   );

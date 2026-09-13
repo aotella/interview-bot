@@ -5,6 +5,7 @@ record at data/reports/{session_id}.json - the sole persisted report record.
 HLD report can never end up with LLD dimensions or vice versa.
 """
 
+import logging
 from pathlib import Path
 from typing import Literal
 
@@ -12,6 +13,8 @@ from pydantic import BaseModel
 
 from backend import config, rubric_loader, transcript_store
 from backend.agent_schemas import DimensionScore, GraderOutput, WeakPointOutcome
+
+logger = logging.getLogger(__name__)
 
 REPORTS_DIR = Path(__file__).resolve().parent.parent / "data" / "reports"
 
@@ -49,6 +52,22 @@ def generate_report(session_id: str, grader_output: GraderOutput) -> Path:
         raise ValueError(
             f"grader_output dimensions {sorted(got_dimensions)} do not match "
             f"rubric dimensions {sorted(expected_dimensions)} for round_type={round_type!r}"
+        )
+
+    # Flagged item 7's review pass: a null score means "no transcript
+    # evidence for this dimension," which has zero downstream consequence
+    # for the candidate (unlike a real failing score) - a lazy or
+    # gaming-prone grader could over-use it to dodge harder cases. This is
+    # a diagnostic signal, not a validation failure (a short/aborted
+    # session can legitimately hit a high null count with no gaming
+    # involved), so it's a log warning here rather than a raise in
+    # grader_agent's retry-on-raise validation.
+    null_dimension_count = sum(1 for d in grader_output.dimensions if d.score is None)
+    if null_dimension_count >= len(expected_dimensions) / 2:
+        logger.warning(
+            "session %s: grader marked %d/%d dimensions null (round_type=%s) - "
+            "check for under-coverage or null-as-escape-hatch grading",
+            session_id, null_dimension_count, len(expected_dimensions), round_type,
         )
 
     pause_events = [e for e in events if e.event in ("pause_start", "pause_end")]

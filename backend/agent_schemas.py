@@ -67,7 +67,7 @@ class Evidence(BaseModel):
 
 class DimensionScore(BaseModel):
     dimension: str
-    score: int
+    score: int | None  # None = no transcript evidence exists for this dimension
     evidence: list[Evidence]
 
 

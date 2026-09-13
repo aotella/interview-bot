@@ -12,7 +12,8 @@ function ReportBody({ report }) {
       {report.dimensions.map((d) => (
         <div className="dimension-card" key={d.dimension}>
           <h3>
-            {d.dimension} &mdash; {d.score}/{report.score_range[1]}
+            {d.dimension} &mdash;{" "}
+            {d.score === null ? "Not tested this session" : `${d.score}/${report.score_range[1]}`}
           </h3>
           <ul>
             {d.evidence.map((ev, i) => (

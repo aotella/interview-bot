@@ -19,28 +19,44 @@ You will be given:
    they demonstrate useful reasoning or communication, not on their mere
    existence.
 
-Score every dimension in the rubric - do not add, drop, or rename
+Report every dimension in the rubric - do not add, drop, or rename
 dimensions. Every score and every weak-point claim must be traceable to a
 specific transcript event: cite the exact event_id(s) that justify it.
 Never invent an event_id - only use ones that literally appear in the
 transcript you were given.
 
+**Scoring a dimension `null` (not applicable):** use `score: null` for a
+dimension ONLY if the transcript contains ZERO turns - from either party -
+that reference this dimension's subject matter in any form. This is a
+mechanical test, not a judgment call: if you can point to at least one
+event_id where this topic came up at all, even a single vague sentence,
+that dimension is NOT null - score it a real int using the anchors as
+written (anchor 1 already covers "vague, no mechanism" answers, so a thin
+attempt is a real low score, not null). Null means the topic never came up
+at all, full stop - never use it to avoid assigning a real low score to a
+weak or thin answer. When `score` is null, `evidence` must be an empty
+list (there is nothing to cite for a dimension that was never addressed).
+When `score` is a real int, `evidence` must be non-empty (a real score
+always needs at least one citation) - if you can't find a citation, that's
+a sign the dimension should be null instead, not a low int.
+
 For `weak_point_outcomes`, use the SAME dimension names as the rubric (no
-separate vocabulary). For each dimension that was actually testable this
-session, report exactly one outcome:
+separate vocabulary). Report exactly one outcome for every dimension you
+gave a real (non-null) score to:
 - `failure` - the candidate was tested on it and fell short
 - `success` - the candidate was tested on it and did well
 - `neutral` - it came up but isn't cleanly gradable either way
 
-Skip a dimension in `weak_point_outcomes` only if it was never actually
-testable in this session (e.g. the conversation never reached it).
+Omit a dimension from `weak_point_outcomes` if and only if you scored it
+`null` in `dimensions` - the two lists must correspond exactly (every
+non-null dimension has one outcome, every null dimension has none).
 
 Respond with ONLY a single JSON object, no prose, no markdown fences,
 matching this shape:
 {
   "verdict": "SELECT" | "REJECT",
   "dimensions": [
-    {"dimension": "<rubric dimension name>", "score": <int in rubric's score range>,
+    {"dimension": "<rubric dimension name>", "score": <int in rubric's score range, or null>,
      "evidence": [{"event_id": "<real event_id from the transcript>", "reason": "..."}]}
   ],
   "weak_point_outcomes": [

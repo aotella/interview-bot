@@ -95,22 +95,49 @@ def grade_transcript(session_id: str, diagrams: list[DiagramImage] | None = None
                 f"dimensions {sorted(expected_dimensions)}"
             )
         for d in output.dimensions:
-            if not (rubric.score_range[0] <= d.score <= rubric.score_range[1]):
-                raise ValueError(
-                    f"score {d.score} for dimension {d.dimension!r} is outside "
-                    f"rubric score_range {rubric.score_range}"
-                )
+            if d.score is None:
+                if d.evidence:
+                    raise ValueError(
+                        f"dimension {d.dimension!r} scored null (not applicable) but "
+                        f"cites {len(d.evidence)} evidence entries - null means no "
+                        "transcript evidence exists for this dimension, so it must "
+                        "cite none"
+                    )
+            else:
+                if not (rubric.score_range[0] <= d.score <= rubric.score_range[1]):
+                    raise ValueError(
+                        f"score {d.score} for dimension {d.dimension!r} is outside "
+                        f"rubric score_range {rubric.score_range}"
+                    )
+                if not d.evidence:
+                    raise ValueError(
+                        f"dimension {d.dimension!r} has a real score ({d.score}) but "
+                        "cites no evidence - a real score requires at least one "
+                        "citation, otherwise it should be null instead"
+                    )
             for ev in d.evidence:
                 if ev.event_id not in valid_event_ids:
                     raise ValueError(
                         f"evidence event_id {ev.event_id!r} does not exist in "
                         f"transcript for session {session_id!r}"
                     )
-        for wpo in output.weak_point_outcomes:
-            if wpo.tag not in expected_dimensions:
-                raise ValueError(
-                    f"weak_point_outcomes tag {wpo.tag!r} is not a rubric dimension"
-                )
+
+        # weak_point_outcomes must cover exactly the scored (non-null)
+        # dimensions - not just "no null tag leaked in" (Flagged item 7's
+        # review pass caught that a one-directional check also misses the
+        # mirror bug: a real, scored dimension silently missing from
+        # weak_point_outcomes, which undercounts a real weakness the same
+        # way a leaked null tag would overcount one).
+        scored_tags = {d.dimension for d in output.dimensions if d.score is not None}
+        wpo_tags = {wpo.tag for wpo in output.weak_point_outcomes}
+        if wpo_tags != scored_tags:
+            missing = scored_tags - wpo_tags
+            extra = wpo_tags - scored_tags
+            raise ValueError(
+                f"weak_point_outcomes tags {sorted(wpo_tags)} must exactly match "
+                f"scored (non-null) dimensions {sorted(scored_tags)}; "
+                f"missing={sorted(missing)} extra={sorted(extra)}"
+            )
 
     system_prompt = _load_prompt(round_type)
     rubric_json = json.dumps(rubric.model_dump(), indent=2)

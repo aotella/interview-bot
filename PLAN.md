@@ -254,27 +254,45 @@ opposed to stubbed) until decided.
    checkpoint {checkpoint_id} could not be loaded") rather than aborting
    the whole grading call — one bad image shouldn't block grading the rest
    of the session.**
-7. **No-evidence/N/A scoring.** Surfaced by the 2026-09-13 rubric review
-   pass (see Flagged item 1's review-pass note above). Every dimension's
-   anchor 1 describes candidate *failure* in language a grader can't
-   distinguish from "the interviewer never raised this topic in the
-   session." A rushed or unlucky interviewer pass currently means the
-   candidate gets scored 1 on a dimension they were never actually tested
-   on, and that bad score feeds directly into `weakpoint_store` and biases
-   future question selection toward a topic that isn't actually a
-   weakness. Not resolved — needs a decision, not just anchor wording:
-   `agent_schemas.DimensionScore.score` is `int` (1-4), so representing
-   "not applicable" means widening that type (`int | None`, or a
-   sentinel), deciding what `weakpoint_store`'s
-   `opportunities == successes + failures + neutral` invariant does with
-   an N/A dimension (presumably: doesn't count as an opportunity at all,
-   rather than as a neutral outcome), and updating both grader prompts to
-   actually emit it instead of guessing. Touches `agent_schemas.py`,
-   `grader_agent.py`, both `grader_{hld,lld_deepdive}_v1.md` prompts,
-   `weakpoint_store.py`, and probably `report_generator.py`/`ReportView`'s
-   rendering of a dimension with no score — real scope, not a quick patch.
-   Blocks: fully trusting weak-point data from any session where the
-   interviewer didn't probe every dimension (i.e. most sessions).
+7. ~~**No-evidence/N/A scoring.**~~ **Resolved 2026-09-13:** surfaced by
+   the rubric review pass (Flagged item 1's review-pass note above);
+   resolved the same way, via another fresh-agent design review iterated
+   to alignment before implementing. `agent_schemas.DimensionScore.score`
+   widened to `int | None` — `None` means "zero transcript turns from
+   either party reference this dimension's subject matter," a mechanical
+   test given to the grader in both prompts (not a judgment call - a thin/
+   vague attempt is still a real low score under the existing anchors,
+   never null). `weakpoint_store` itself needed no change: the grader
+   simply omits a `WeakPointOutcome` entry for any null dimension, and
+   `session_engine` only calls `record_outcome` for entries actually
+   present, so exclusion happens by omission with no new code path in the
+   store. `grader_agent._extra_validate` enforces the null↔evidence
+   pairing (null requires empty evidence, a real score requires non-empty
+   evidence) and a **bidirectional** consistency check —
+   `weak_point_outcomes` tags must exactly equal the scored (non-null)
+   dimension set, not just "no null tag leaked in" (the review caught that
+   a one-directional check misses the mirror bug: a real scored dimension
+   silently missing from `weak_point_outcomes`, which undercounts a real
+   weakness the same way a leaked null tag would overcount one).
+   `report_generator.generate_report` logs a warning when a session scores
+   half or more of its dimensions null (`len(expected_dimensions) / 2`,
+   not hardcoded) — a cheap, derived gaming-vector signal since null has
+   zero downstream consequence for the candidate unlike a real failing
+   score, placed downstream of validation rather than as a raise (a high
+   null count is unusual, not invalid — a short/aborted session can
+   legitimately hit it with no gaming involved). `HistoryView`'s
+   `averageScore` now returns `{avg, testedCount, totalCount}`, filters
+   nulls before averaging, and the trend line skips plotting a session
+   entirely when fewer than half its dimensions were tested (same
+   threshold as the backend warning) rather than showing a misleadingly
+   equal-weighted point; tested points otherwise render dimmed/smaller by
+   `testedCount` with a tooltip. `ReportView` renders "Not tested this
+   session" instead of a fabricated score. Five new tests cover the null
+   path and both directions of the bidirectional check; two pre-existing
+   grader-agent test fixtures had a latent version of exactly this bug
+   (only one dimension populated in `weak_point_outcomes` while six were
+   scored) and were corrected as part of this change, not scope creep -
+   they'd have failed the new check otherwise.
 
 ---
 
