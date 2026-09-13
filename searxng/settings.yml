@@ -1,0 +1,21 @@
+# Minimal SearXNG config for this project. JSON output format is enabled
+# below - it's required by backend/searxng_client.py, and is disabled by
+# default upstream. Everything else falls back to SearXNG's defaults.
+#
+# Regenerate `secret_key` before exposing this instance beyond localhost:
+#   python3 -c "import secrets; print(secrets.token_hex(32))"
+
+use_default_settings: true
+
+general:
+  instance_name: "interview-prep-agent searxng"
+
+server:
+  secret_key: "CHANGE_ME_65f8f1b1c3f94f6c9b2a7e2a0f4e8c9d1a6b3d5e7f9c1b3d5e7f9c1b3d5e7f9c"
+  limiter: false
+  image_proxy: false
+
+search:
+  formats:
+    - html
+    - json

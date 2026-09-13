@@ -1,0 +1,44 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: interview-prep-backend
+    env_file:
+      - .env
+    environment:
+      SEARXNG_URL: http://searxng:8080
+      EXCALIDRAW_EXPORT_PATH: /excalidraw
+    volumes:
+      - ./data:/app/data
+      - ${EXCALIDRAW_EXPORT_PATH}:/excalidraw
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      - searxng
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: interview-prep-frontend
+    ports:
+      - "127.0.0.1:5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    ports:
+      - "127.0.0.1:10999:8080"
+    volumes:
+      - ./searxng:/etc/searxng
+      - searxng_data:/var/cache/searxng
+    environment:
+      SEARXNG_BASE_URL: http://localhost:10999/
+    restart: unless-stopped
+
+volumes:
+  searxng_data:

@@ -64,6 +64,30 @@ Then open the Vite dev server URL (default `http://localhost:5173`). The
 frontend talks to the backend at `http://127.0.0.1:8000`; CORS on the backend
 is scoped specifically to `http://localhost:5173`.
 
+## Running with Docker / Podman
+
+A `docker-compose.yml` and `podman-compose.yml` are provided, building the
+backend, frontend, and a SearXNG instance (JSON API pre-enabled via
+`searxng/settings.yml`). Data (`./data`) and SearXNG's cache are persisted
+via volumes, not ephemeral.
+
+1. Copy `.env.example` to `.env` and fill in `EXCALIDRAW_EXPORT_PATH` and
+   `OPENROUTER_API_KEY` (leave `SEARXNG_URL` unset - compose points the
+   backend at the `searxng` service automatically).
+2. Regenerate the `secret_key` in `searxng/settings.yml` before first run:
+   ```bash
+   python3 -c "import secrets; print(secrets.token_hex(32))"
+   ```
+3. Start everything:
+   ```bash
+   docker compose up -d --build
+   # or
+   podman-compose -f podman-compose.yml up -d --build
+   ```
+
+Frontend: `http://localhost:5173`. Backend: `http://127.0.0.1:8000`.
+SearXNG: `http://127.0.0.1:10999`.
+
 ## Tests
 
 ```bash
